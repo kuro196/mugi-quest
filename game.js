@@ -331,7 +331,7 @@ const GRADE1_DUNGEONS = [
   {
     "id": "g1_noun_1",
     "title": "名詞ダンジョン①",
-    "countLabel": "約90語",
+    "countLabel": "90語",
     "backgroundImg": "images/backgrounds/dungeon_unit01.png",
     "enemyImg": "images/enemies/slime.png",
     "stages": [
@@ -385,7 +385,7 @@ const GRADE1_DUNGEONS = [
   {
     "id": "g1_noun_2",
     "title": "名詞ダンジョン②",
-    "countLabel": "約90語",
+    "countLabel": "90語",
     "backgroundImg": "images/backgrounds/dungeon_unit01.png",
     "enemyImg": "images/enemies/slime.png",
     "stages": [
@@ -439,7 +439,7 @@ const GRADE1_DUNGEONS = [
   {
     "id": "g1_noun_3",
     "title": "名詞ダンジョン③",
-    "countLabel": "約90語",
+    "countLabel": "90語",
     "backgroundImg": "images/backgrounds/dungeon_unit01.png",
     "enemyImg": "images/enemies/slime.png",
     "stages": [
@@ -493,7 +493,7 @@ const GRADE1_DUNGEONS = [
   {
     "id": "g1_noun_4",
     "title": "名詞ダンジョン④",
-    "countLabel": "約90語",
+    "countLabel": "90語",
     "backgroundImg": "images/backgrounds/dungeon_unit01.png",
     "enemyImg": "images/enemies/slime.png",
     "stages": [
@@ -547,7 +547,7 @@ const GRADE1_DUNGEONS = [
   {
     "id": "g1_noun_5",
     "title": "名詞ダンジョン⑤",
-    "countLabel": "約100語",
+    "countLabel": "102語",
     "backgroundImg": "images/backgrounds/dungeon_unit01.png",
     "enemyImg": "images/enemies/slime.png",
     "stages": [

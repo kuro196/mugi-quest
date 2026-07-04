@@ -2002,3 +2002,32 @@ code {
     order: 4;
   }
 }
+
+/* ===== Smartphone wordbook wrapping v25 ===== */
+@media (max-width: 560px) {
+  /* スマホ図鑑では長い読み方・日本語訳を省略せず複数行で表示 */
+  .game-shell.wordbook-mode .wordbook-page-table .wordbook-row {
+    align-items: stretch;
+  }
+
+  .game-shell.wordbook-mode .wordbook-page-table .wordbook-row span {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.35;
+  }
+
+  .game-shell.wordbook-mode .word-pron,
+  .game-shell.wordbook-mode .word-ja {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
