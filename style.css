@@ -1971,3 +1971,34 @@ code {
     font-size: 14px;
   }
 }
+
+/* ===== Smartphone battle fine tuning v24 ===== */
+@media (max-width: 560px) {
+  /* ハートを上へ、ムギを少し下へ。PC・タブレットには影響させない */
+  .game-shell.screen-battle-mode .player-stage-life,
+  .game-shell.screen-battle-mode .enemy-stage-life,
+  .game-shell.screen-battle-mode .enemy-img.final-boss-position ~ .enemy-stage-life {
+    bottom: 80%;
+  }
+
+  .game-shell.screen-battle-mode .player-img {
+    bottom: 0;
+  }
+
+  /* スマホのバトル画面は 回答入力 → 問題 → 結果 → バトルログ の順 */
+  .game-shell.screen-battle-mode .answer-form {
+    order: 1;
+  }
+
+  .game-shell.screen-battle-mode .question-box {
+    order: 2;
+  }
+
+  .game-shell.screen-battle-mode .result-box {
+    order: 3;
+  }
+
+  .game-shell.screen-battle-mode .mobile-battle-log-card {
+    order: 4;
+  }
+}
