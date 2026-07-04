@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ムギクエスト Ver1.0</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <header class="mobile-bar" aria-label="スマホ用メニュー">
+      <div id="mobileBarTitle" class="mobile-bar-title">ムギクエスト</div>
+      <button id="mobileMenuBtn" class="mobile-menu-btn" type="button" aria-expanded="false" aria-controls="mobileMenuPanel">☰</button>
+    </header>
+
+    <div id="mobileMenuOverlay" class="mobile-menu-overlay hidden" aria-hidden="true">
+      <div id="mobileMenuPanel" class="mobile-menu-panel" role="dialog" aria-label="メニュー">
+        <button id="mobileTopBtn" type="button">TOP</button>
+        <button id="mobileGrade1Btn" type="button">１年生</button>
+        <button id="mobileGrade2Btn" type="button">２年生</button>
+        <button id="mobileWordBookBtn" type="button">単語図鑑</button>
+        <button id="mobileResetBtn" type="button" class="danger-menu-item">データリセット</button>
+        <button id="mobileMenuCloseBtn" type="button" class="menu-close-item">閉じる</button>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <div>
+        <h1>ムギクエスト <span>Ver1.0</span></h1>
+        <p>英単語RPG / 1年生復習・2年生Unitダンジョン</p>
+      </div>
+      <div class="topbar-actions">
+        <button id="topBtn" class="ghost-btn top-btn" type="button">top</button>
+        <div class="grade-tabs topbar-grade-tabs" aria-label="学年切替">
+          <button id="grade1Btn" class="grade-tab" type="button" data-grade="1">１年生</button>
+          <button id="grade2Btn" class="grade-tab active" type="button" data-grade="2">２年生</button>
+        </div>
+        <button id="openWordBookBtn" class="ghost-btn wordbook-open-btn" type="button">単語図鑑を開く</button>
+        <button id="resetBtn" class="ghost-btn" type="button">データリセット</button>
+      </div>
+    </header>
+
+    <main class="game-shell">
+      <section class="hero-panel">
+        <div class="stage" id="stage">
+          <div class="stage-overlay"></div>
+          <img class="player-img" src="images/player/mugi.png" alt="ムギ" />
+          <img class="enemy-img" id="enemyImg" src="images/enemies/slime.png" alt="単語スライム" />
+          <div id="playerStageLife" class="stage-life player-stage-life">♥ ♥ ♥ ♥ ♥</div>
+          <div id="enemyStageLife" class="stage-life enemy-stage-life">♥ ♥ ♥ ♥ ♥</div>
+          <div class="damage-pop" id="damagePop">Good!</div>
+        </div>
+
+        <div class="status-grid">
+          <div class="status-card">
+            <span>ムギのライフ</span>
+            <strong id="hpText" class="hearts">♥ ♥ ♥</strong>
+            <div class="bar"><i id="hpBar"></i></div>
+          </div>
+          <div class="status-card">
+            <span>敵のライフ</span>
+            <strong id="enemyStatusText">-</strong>
+            <div class="bar enemy-life"><i id="enemyStatusBar"></i></div>
+          </div>
+          <div id="battleStageTitle" class="battle-stage-title-card hidden">Unit0~1ダンジョン 1F スライム1に挑戦！</div>
+          <div class="battle-log-card">
+            <div class="battle-log-title">バトルログ</div>
+            <div id="battleLogList" class="battle-log-list">冒険を始めると、ここにバトルの記録が表示されます。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="play-panel">
+        <div id="screenHome" class="screen active">
+          <div class="home-layout">
+            <section class="adventure-box" aria-label="冒険選択">
+              <h2>冒険を選ぼう</h2>
+              <p class="lead">学年とダンジョンを選んで、日本語訳を英単語にしよう。</p>
+              <div class="quest-list" id="questList"></div>
+            </section>
+
+            <aside class="learning-side" aria-label="学習状況">
+              <section class="unit-record-card">
+                <div class="section-head compact">
+                  <h2>Unitの記録</h2>
+                  <p>Unit全体の進み具合</p>
+                </div>
+                <div id="unitSummaryList" class="unit-summary-list"></div>
+              </section>
+
+            </aside>
+          </div>
+        </div>
+
+        <div id="screenBattle" class="screen">
+          <div class="battle-head"></div>
+
+          <div class="enemy-card">
+            <p id="progressText">1問目</p>
+            <div class="enemy-hp">
+              <span id="enemyLifeLabel">単語スライム ライフ</span>
+              <div class="bar"><i id="enemyHpBar"></i></div>
+            </div>
+          </div>
+
+          <div class="question-box">
+            <button id="backBtn" class="ghost-btn question-back-btn" type="button">戻る</button>
+            <p class="question-small"><span id="progressInline">1問目</span>　この日本語を英単語にすると？</p>
+            <div id="jaText" class="word-text">塩</div>
+            <div class="hint-row">
+              <button id="hintBtn" class="hint-btn" type="button">ヒント</button>
+              <div id="hintText" class="pron-text">ヒントボタンで読み方を表示できます。</div>
+            </div>
+          </div>
+
+          <form id="answerForm" class="answer-form" autocomplete="off">
+            <label class="answer-label" for="answerInput">答え</label>
+            <div class="input-row">
+              <input id="answerInput" class="answer-input" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false" />
+              <button id="answerBtn" class="main-btn" type="submit">攻撃</button>
+            </div>
+            <p class="input-help">大文字・小文字はどちらでもOK。全角英字や余分なスペースも自動で整えます。</p>
+          </form>
+
+          <div id="resultBox" class="result-box hidden">
+            <strong id="resultTitle"></strong>
+            <p id="resultDetail"></p>
+            <button id="nextBtn" class="main-btn" type="button">次へ</button>
+          </div>
+
+          <div class="mobile-battle-log-card">
+            <div class="battle-log-title">バトルログ</div>
+            <div id="mobileBattleLogList" class="battle-log-list">冒険を始めると、ここにバトルの記録が表示されます。</div>
+          </div>
+        </div>
+
+
+        <div id="screenWordBook" class="screen wordbook-screen">
+          <div class="wordbook-page-head">
+            <div>
+              <p class="quest-label">学習記録</p>
+              <h2>単語図鑑</h2>
+              <p class="lead">単語の発見状況と完全習得を確認できます。未発見の英語と読み方は「???」で表示します。</p>
+            </div>
+            <button id="wordBookBackBtn" class="ghost-btn" type="button">戻る</button>
+          </div>
+
+          <div id="wordLevelBox" class="word-level-box"></div>
+          <div class="wordbook-filter-panel" aria-label="単語図鑑フィルター">
+            <div class="wordbook-filter-group">
+              <span class="wordbook-filter-label">学年</span>
+              <button class="wordbook-filter-btn active" type="button" data-wordbook-grade="all">すべて</button>
+              <button class="wordbook-filter-btn" type="button" data-wordbook-grade="1">１年生</button>
+              <button class="wordbook-filter-btn" type="button" data-wordbook-grade="2">２年生</button>
+            </div>
+            <div class="wordbook-filter-group">
+              <span class="wordbook-filter-label">状態</span>
+              <button class="wordbook-filter-btn active" type="button" data-wordbook-status="all">すべて</button>
+              <button class="wordbook-filter-btn" type="button" data-wordbook-status="undiscovered">未発見</button>
+              <button class="wordbook-filter-btn" type="button" data-wordbook-status="learned">1回以上正解</button>
+              <button class="wordbook-filter-btn" type="button" data-wordbook-status="mastered">完全習得</button>
+            </div>
+          </div>
+          <div id="wordBookList" class="wordbook-list"></div>
+        </div>
+
+        <div id="screenResult" class="screen result-screen">
+          <div id="resultVisual" class="result-visual win">
+            <img id="resultMugiWin" class="result-mugi-win" src="images/player/mugi_win.png" alt="よろこぶムギ" />
+            <div id="resultWord" class="result-word">WIN</div>
+            <img id="resultMugiDown" class="result-mugi-down hidden" src="images/player/mugi_down.png" alt="つかれたムギ" />
+          </div>
+          <h2 id="clearTitle">クリア！</h2>
+          <p id="clearMessage" class="lead"></p>
+          <div class="result-stats">
+            <div><span>正解数</span><strong id="correctCount">0</strong></div>
+            <div><span>残り敵ライフ</span><strong id="gainExp">0</strong></div>
+            <div><span>今回覚えた</span><strong id="newLearned">0</strong></div>
+          </div>
+          <div class="result-actions">
+            <button id="retryBtn" class="main-btn" type="button">もう一度挑戦</button>
+            <button id="homeBtn" class="ghost-btn" type="button">冒険選択へ</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
