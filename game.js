@@ -3,6 +3,7 @@ const PLAYER_MAX_LIFE = 5;
 
 const state = {
   words: [],
+  phrases: [],
   save: {
     playerLife: PLAYER_MAX_LIFE,
     exp: 0,
@@ -21,11 +22,14 @@ const state = {
   enemyLife: 10,
   enemyMaxLife: 10,
   answered: false,
+  playerMaxLife: PLAYER_MAX_LIFE,
   previousScreen: "screenHome",
   selectedGrade: 2,
   selectedG1Dungeon: null,
   wordBookGradeFilter: "all",
-  wordBookStatusFilter: "all"
+  wordBookStatusFilter: "all",
+  phraseBookGradeFilter: "all",
+  phraseBookStatusFilter: "all"
 };
 
 const quests = [
@@ -140,7 +144,7 @@ const quests = [
     id: "unit2_dungeon_4f",
     title: "Unit2ダンジョン 4F",
     boss: "ゴースト4",
-    bossLife: 16,
+    bossLife: 15,
     enemyImg: "images/enemies/ghost.png",
     backgroundImg: "images/backgrounds/dungeon_unit2.png",
     mode: "area",
@@ -158,6 +162,51 @@ const quests = [
     mode: "final",
     unit: "Unit2",
     wordType: "word"
+  },
+  {
+    id: "unit01_phrase_dungeon",
+    title: "Unit0~1 熟語ダンジョン",
+    boss: "熟語スライム",
+    bossLife: 3,
+    enemyImg: "images/enemies/slime_king.png",
+    backgroundImg: "images/backgrounds/dungeon_unit01.png",
+    mode: "phrase_unit",
+    unit: "Unit0~1",
+    wordType: "phrase"
+  },
+  {
+    id: "unit2_phrase_dungeon",
+    title: "Unit2 熟語ダンジョン",
+    boss: "熟語ゴースト",
+    bossLife: 7,
+    enemyImg: "images/enemies/ghost_master.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "phrase_unit",
+    unit: "Unit2",
+    wordType: "phrase"
+  },
+  {
+    id: "unit2_word_test_prep",
+    title: "Unit2 単語テスト対策ダンジョン①",
+    boss: "テストゴースト",
+    bossLife: 25,
+    playerLife: 10,
+    enemyImg: "images/enemies/ghost_master.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "unit2_test_prep",
+    unit: "Unit2",
+    wordType: "mixed_test"
+  },
+  {
+    id: "unit2_long_writing_test_prep",
+    title: "Unit2 テスト対策ダンジョン②",
+    boss: "ライティングゴースト",
+    bossLife: 2,
+    enemyImg: "images/enemies/ghost_master.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "unit2_long_writing",
+    unit: "Unit2",
+    wordType: "long_writing"
   }
 
 ];
@@ -602,6 +651,21 @@ const GRADE1_DUNGEONS = [
         "boss": "スライム10"
       }
     ]
+  },
+  {
+    "id": "g1_phrase",
+    "title": "熟語ダンジョン",
+    "countLabel": "2熟語",
+    "backgroundImg": "images/backgrounds/dungeon_unit01.png",
+    "enemyImg": "images/enemies/slime_king.png",
+    "wordType": "phrase",
+    "stages": [
+      {
+        "id": "g1_phrase_s01",
+        "title": "熟語1",
+        "boss": "熟語スライム"
+      }
+    ]
   }
 ];
 
@@ -610,6 +674,8 @@ function getGrade1Dungeon(dungeonId) {
 }
 
 function getGrade1StageWords(dungeonId, stageId) {
+  const dungeon = getGrade1Dungeon(dungeonId);
+  if (dungeon?.wordType === "phrase") return state.phrases.filter(p => p.grade === 1);
   return state.words.filter(w => w.grade === 1 && w.dungeon === dungeonId && w.stage === stageId && (w.type || "word") === "word");
 }
 
@@ -629,7 +695,7 @@ function buildGrade1Quests() {
       unit: "1年生",
       dungeon: dungeon.id,
       stage: stage.id,
-      wordType: "word"
+      wordType: dungeon.wordType || "word"
     };
   }));
 }
@@ -743,9 +809,11 @@ function saveGame() {
 }
 
 async function loadWords() {
-  const res = await fetch("words.json");
-  if (!res.ok) throw new Error("words.jsonを読み込めませんでした");
-  state.words = await res.json();
+  const [wordRes, phraseRes] = await Promise.all([fetch("words.json"), fetch("phrases.json")]);
+  if (!wordRes.ok) throw new Error("words.jsonを読み込めませんでした");
+  if (!phraseRes.ok) throw new Error("phrases.jsonを読み込めませんでした");
+  state.words = await wordRes.json();
+  state.phrases = await phraseRes.json();
 }
 
 function shuffle(array) {
@@ -762,9 +830,18 @@ function normalizeAnswer(value) {
     .replace(/\s+/g, " ");
 }
 
-function getAcceptedAnswers(word) {
-  const answers = [word.en, ...(word.answers || [])];
+function getAcceptedAnswers(item) {
+  const primary = item.answer || item.en || item.phrase || "";
+  const answers = [primary, ...(item.answers || [])];
   return answers.map(normalizeAnswer).filter(Boolean);
+}
+
+function getPrimaryAnswer(item) {
+  return item.answer || item.en || item.phrase || "";
+}
+
+function isPhraseItem(item) {
+  return Boolean(item && (item.type === "phrase" || item.phrase || item.answer));
 }
 
 function getWordStats(wordId) {
@@ -778,7 +855,8 @@ function getWordStats(wordId) {
 function saveWordStats(wordId, stats) {
   state.save.learned[wordId] = stats;
   const rate = stats.attempts > 0 ? stats.correct / stats.attempts : 0;
-  if (stats.correct >= 5 && rate >= 0.8) {
+  const neededCorrect = String(wordId).startsWith("p1_") || String(wordId).startsWith("p2_") ? 3 : 5;
+  if (stats.correct >= neededCorrect && rate >= 0.8) {
     state.save.mastered[wordId] = true;
   } else {
     delete state.save.mastered[wordId];
@@ -786,12 +864,12 @@ function saveWordStats(wordId, stats) {
 }
 
 function showScreen(name) {
-  ["screenHome", "screenBattle", "screenWordBook", "screenResult"].forEach(id => $(id).classList.remove("active"));
+  ["screenHome", "screenBattle", "screenWordBook", "screenPhraseBook", "screenResult"].forEach(id => $(id).classList.remove("active"));
   $(name).classList.add("active");
 
   const shell = document.querySelector(".game-shell");
   if (shell) {
-    shell.classList.toggle("wordbook-mode", name === "screenWordBook");
+    shell.classList.toggle("wordbook-mode", name === "screenWordBook" || name === "screenPhraseBook");
     shell.classList.toggle("screen-home-mode", name === "screenHome");
     shell.classList.toggle("screen-battle-mode", name === "screenBattle");
     shell.classList.toggle("screen-result-mode", name === "screenResult");
@@ -803,6 +881,8 @@ function showScreen(name) {
       mobileTitle.textContent = `${state.currentQuest.title} ${state.currentQuest.boss}に挑戦！`;
     } else if (name === "screenWordBook") {
       mobileTitle.textContent = "単語図鑑";
+    } else if (name === "screenPhraseBook") {
+      mobileTitle.textContent = "熟語図鑑";
     } else if (name === "screenResult") {
       mobileTitle.textContent = "バトル結果";
     } else {
@@ -836,6 +916,18 @@ function closeWordBook() {
   showScreen(target);
 }
 
+function openPhraseBook() {
+  const current = document.querySelector(".screen.active");
+  state.previousScreen = current ? current.id : "screenHome";
+  renderPhraseBook();
+  showScreen("screenPhraseBook");
+}
+
+function closePhraseBook() {
+  const target = state.previousScreen && state.previousScreen !== "screenPhraseBook" ? state.previousScreen : "screenHome";
+  showScreen(target);
+}
+
 function goTop() {
   state.currentQuest = null;
   state.currentWord = null;
@@ -847,6 +939,7 @@ function goTop() {
   state.newLearnedIds = new Set();
   state.selectedG1Dungeon = null;
   state.previousScreen = "screenHome";
+  state.playerMaxLife = PLAYER_MAX_LIFE;
 
   const stageElement = $("stage");
   if (stageElement) stageElement.classList.remove("result-mode", "result-win", "result-lose");
@@ -858,8 +951,19 @@ function goTop() {
   showScreen("screenHome");
 }
 
-function heartsText(life) {
-  return Array.from({ length: PLAYER_MAX_LIFE }, (_, i) => i < life ? "♥" : "♡").join(" ");
+function heartsText(life, maxLife = state.playerMaxLife || PLAYER_MAX_LIFE) {
+  return Array.from({ length: maxLife }, (_, i) => i < life ? "♥" : "♡").join(" ");
+}
+
+function playerStageHeartsHtml(life, maxLife, rowsOfFive = false) {
+  const hearts = Array.from({ length: maxLife }, (_, i) => i < life ? "♥" : "♡");
+  if (!rowsOfFive) return hearts.join(" ");
+
+  const rows = [];
+  for (let i = 0; i < hearts.length; i += 5) {
+    rows.push(`<span class="player-heart-row">${hearts.slice(i, i + 5).join(" ")}</span>`);
+  }
+  return rows.join("");
 }
 
 function enemyHeartArray(life, maxLife) {
@@ -907,7 +1011,7 @@ function enemyLifeDisplay() {
 }
 
 function updateStatus() {
-  const lifePercent = Math.max(0, Math.min(100, (state.save.playerLife / PLAYER_MAX_LIFE) * 100));
+  const lifePercent = Math.max(0, Math.min(100, (state.save.playerLife / (state.playerMaxLife || PLAYER_MAX_LIFE)) * 100));
   const enemyPercent = state.enemyMaxLife > 0
     ? Math.max(0, Math.min(100, (state.enemyLife / state.enemyMaxLife) * 100))
     : 0;
@@ -916,7 +1020,14 @@ function updateStatus() {
   if ($("hpBar")) $("hpBar").style.width = `${lifePercent}%`;
 
   if ($("playerStageLife")) {
-    $("playerStageLife").textContent = heartsText(state.save.playerLife);
+    const playerLifeEl = $("playerStageLife");
+    const isTwoRowLife = state.currentQuest?.mode === "unit2_test_prep";
+    playerLifeEl.classList.toggle("player-life-two-rows", isTwoRowLife);
+    playerLifeEl.innerHTML = playerStageHeartsHtml(
+      state.save.playerLife,
+      state.playerMaxLife || PLAYER_MAX_LIFE,
+      isTwoRowLife
+    );
   }
   if ($("enemyStageLife")) {
     $("enemyStageLife").innerHTML = state.currentQuest ? enemyStageHeartsHtml(state.enemyLife, state.enemyMaxLife) : "";
@@ -952,6 +1063,11 @@ function isWordMastered(wordId) {
   return stats.correct >= 5 && getCorrectRate(stats) >= 80;
 }
 
+function isPhraseMastered(phraseId) {
+  const stats = getWordStats(phraseId);
+  return stats.correct >= 3 && getCorrectRate(stats) >= 80;
+}
+
 function getProgressCountText(stats) {
   return `${stats.correct}/${stats.attempts}回`;
 }
@@ -959,6 +1075,7 @@ function getProgressCountText(stats) {
 function renderLearningDashboard() {
   renderUnitSummary();
   renderWordBook();
+  renderPhraseBook();
 }
 
 function renderUnitSummary() {
@@ -1000,13 +1117,15 @@ function renderUnitSummary() {
     row.className = "unit-summary-row";
     row.innerHTML = `
       <div class="unit-name">${group.name}</div>
-      <div class="unit-metric">
-        <span>1回以上正解</span>
-        <strong>${totals.learned}/${total}</strong>
-      </div>
-      <div class="unit-metric master">
-        <span>完全習得数</span>
-        <strong>${totals.mastered}/${total}</strong>
+      <div class="unit-metrics-box">
+        <div class="unit-metric">
+          <span>1回以上正解</span>
+          <strong>${totals.learned}/${total}</strong>
+        </div>
+        <div class="unit-metric master">
+          <span>完全習得数</span>
+          <strong>${totals.mastered}/${total}</strong>
+        </div>
       </div>
     `;
     list.appendChild(row);
@@ -1170,6 +1289,51 @@ function setWordBookStatusFilter(value) {
   renderWordBook();
 }
 
+function getPhraseBookItemsByFilter() {
+  return state.phrases.filter(item => {
+    if (state.phraseBookGradeFilter === "1" && item.grade !== 1) return false;
+    if (state.phraseBookGradeFilter === "2" && item.grade !== 2) return false;
+    const stats = getWordStats(item.id);
+    const mastered = isPhraseMastered(item.id);
+    if (state.phraseBookStatusFilter === "undiscovered") return stats.correct === 0;
+    if (state.phraseBookStatusFilter === "learned") return stats.correct > 0 && !mastered;
+    if (state.phraseBookStatusFilter === "mastered") return mastered;
+    return true;
+  });
+}
+
+function renderPhraseBook() {
+  const list = $("phraseBookList");
+  const box = $("phraseLevelBox");
+  if (!list || !box) return;
+  document.querySelectorAll("[data-phrasebook-grade]").forEach(btn => btn.classList.toggle("active", btn.dataset.phrasebookGrade === state.phraseBookGradeFilter));
+  document.querySelectorAll("[data-phrasebook-status]").forEach(btn => btn.classList.toggle("active", btn.dataset.phrasebookStatus === state.phraseBookStatusFilter));
+  const items = getPhraseBookItemsByFilter().sort((a,b) => a.grade - b.grade || Number(a.no) - Number(b.no));
+  const learned = items.filter(i => getWordStats(i.id).correct > 0).length;
+  const mastered = items.filter(i => isPhraseMastered(i.id)).length;
+  box.innerHTML = `<div class="word-level-stats"><span>1回以上正解 <strong>${learned}/${items.length}熟語</strong></span><span>完全習得 <strong>${mastered}/${items.length}熟語</strong></span></div>`;
+  if (!items.length) { list.innerHTML = `<div class="wordbook-empty">表示できる熟語がありません。フィルターを変えてみよう。</div>`; return; }
+  list.innerHTML = `<div class="wordbook-table wordbook-page-table phrasebook-table"><div class="wordbook-row wordbook-header"><span>番号</span><span>熟語</span><span>意味</span><span>学年・Unit</span><span>正解数</span><span>正答率</span><span>状態</span></div></div>`;
+  const table = list.querySelector(".phrasebook-table");
+  items.forEach(item => {
+    const stats = getWordStats(item.id);
+    const masteredItem = isPhraseMastered(item.id);
+    const discovered = stats.correct > 0;
+    const row = document.createElement("div");
+    row.className = `wordbook-row ${masteredItem ? "mastered" : ""} ${!discovered ? "undiscovered" : ""}`;
+    const correctLeft = Math.max(0, 3 - stats.correct);
+    const rate = getCorrectRate(stats);
+    let status = "未発見";
+    if (masteredItem) status = "完全習得";
+    else if (stats.attempts > 0) { const h=[]; if(correctLeft>0)h.push(`あと${correctLeft}回正解`); if(rate<80)h.push("正答率80%未満"); status=h.join("・") || "もう少し"; }
+    row.innerHTML = `<span class="word-no">${String(item.no).padStart(3,"0")}</span><span class="phrase-en">${discovered ? item.phrase : "???"}</span><span class="phrase-ja">${item.meaning || item.ja}</span><span>${item.grade === 1 ? "1年生" : `2年生 ${item.unit}`}</span><span class="word-score">${stats.correct}/${stats.attempts}</span><span class="word-rate">${getWordBookRateText(stats)}</span><span class="word-state">${status}</span>`;
+    table.appendChild(row);
+  });
+}
+
+function setPhraseBookGradeFilter(value) { state.phraseBookGradeFilter = value; renderPhraseBook(); }
+function setPhraseBookStatusFilter(value) { state.phraseBookStatusFilter = value; renderPhraseBook(); }
+
 function getQuestGroupLabel(unit) {
   if (unit === "Unit0~1") return "Unit0~1";
   return unit;
@@ -1250,7 +1414,7 @@ function renderGrade1StageMenu(questList) {
     card.innerHTML = `
       <div class="quest-title-row">
         <h3>${stage.title}</h3>
-        <span class="badge boss-badge">${words.length || quest.bossLife}語</span>
+        <span class="badge boss-badge">${words.length || quest.bossLife}${quest.wordType === "phrase" ? "熟語" : "語"}</span>
       </div>
       <button class="main-btn quest-start-btn" type="button">${cleared ? "★ " : ""}出発</button>
     `;
@@ -1323,7 +1487,56 @@ function renderQuests() {
 
 function getQuestWords(quest, forBattle = true) {
   let filtered;
-  if (quest.mode === "g1_stage") {
+  if (quest.mode === "unit2_long_writing") {
+    filtered = [
+      {
+        id: "unit2_long_01",
+        type: "long_sentence",
+        ja: "スープが濃いので、私は札幌ラーメンが好きです。",
+        en: "I like Sapporo ramen because the soup is thick.",
+        answers: [
+          "I like Sapporo ramen because the soup is thick",
+          "Because the soup is thick, I like Sapporo ramen.",
+          "Because the soup is thick, I like Sapporo ramen"
+        ],
+        displayAnswers: [
+          "I like Sapporo ramen because the soup is thick.",
+          "Because the soup is thick, I like Sapporo ramen."
+        ],
+        skipStats: true
+      },
+      {
+        id: "unit2_long_02",
+        type: "long_sentence",
+        ja: "私は食べ物は世界中を旅すると思います。",
+        en: "I think food travels around the world.",
+        answers: [
+          "I think food travels around the world",
+          "I think that food travels around the world.",
+          "I think that food travels around the world"
+        ],
+        displayAnswers: [
+          "I think food travels around the world.",
+          "I think that food travels around the world."
+        ],
+        skipStats: true
+      }
+    ];
+  } else if (quest.mode === "unit2_test_prep") {
+    const targetNos = new Set(["072","073","074","075","077","078","079","080","082","083","084","086","087","088","089","090","091","092","095","097"]);
+    const testWords = state.words.filter(w => targetNos.has(String(w.no).padStart(3, "0")) && w.unit === "Unit2");
+    const testPhrases = [
+      { id: "test_p_come_from", type: "test_phrase", phrase: "come from", ja: "…出身である、…から来ている", answer: "come from", answers: [], pron: "カム フロム", blankCount: 2, skipStats: true },
+      { id: "test_p_here_is_are", type: "test_phrase", phrase: "Here is [are] ...", ja: "これが…です／ここに…があります／…をどうぞ", answer: "here is", answers: ["here are"], pron: "ヒア イズ／ヒア アー", blankCount: 2, skipStats: true },
+      { id: "test_p_be_interested_in", type: "test_phrase", phrase: "be interested in", ja: "…に興味がある", answer: "be interested in", answers: [], pron: "ビー インタレスティド イン", blankCount: 3, skipStats: true },
+      { id: "test_p_kinds_of", type: "test_phrase", phrase: "kind(s) of ～", ja: "…種類の～", answer: "kind of", answers: ["kinds of"], pron: "カインド オブ／カインズ オブ", blankCount: 2, skipStats: true },
+      { id: "test_p_name_after", type: "test_phrase", phrase: "name ... after ～", ja: "～にちなんで…を…と名付ける", answer: "name after", answers: [], pron: "ネイム アフター", blankCount: 2, skipStats: true }
+    ];
+    filtered = [...testWords, ...testPhrases];
+  } else if (quest.wordType === "phrase") {
+    if (quest.grade === 1 || quest.mode === "g1_stage") filtered = state.phrases.filter(p => p.grade === 1);
+    else filtered = state.phrases.filter(p => p.grade === 2 && p.unit === quest.unit);
+  } else if (quest.mode === "g1_stage") {
     filtered = state.words.filter(w => w.grade === 1 && w.dungeon === quest.dungeon && w.stage === quest.stage);
   } else if (quest.mode === "final") {
     filtered = state.words.filter(w => w.unit === quest.unit);
@@ -1331,7 +1544,7 @@ function getQuestWords(quest, forBattle = true) {
     filtered = state.words.filter(w => w.unit === quest.unit && w.area === quest.area);
   }
 
-  if (quest.wordType) {
+  if (quest.wordType && !["phrase", "mixed_test", "long_writing"].includes(quest.wordType)) {
     filtered = filtered.filter(w => (w.type || "word") === quest.wordType);
   }
 
@@ -1378,7 +1591,7 @@ function startQuest(questId) {
 
   const words = getQuestWords(quest, true);
   if (words.length === 0) {
-    alert("このクエストの単語がまだありません。words.jsonを確認してください。");
+    alert("このクエストの問題がまだありません。データを確認してください。");
     return;
   }
 
@@ -1393,7 +1606,8 @@ function startQuest(questId) {
   state.enemyMaxLife = quest.bossLife;
   state.enemyLife = quest.bossLife;
   state.answered = false;
-  state.save.playerLife = PLAYER_MAX_LIFE;
+  state.playerMaxLife = quest.playerLife || PLAYER_MAX_LIFE;
+  state.save.playerLife = state.playerMaxLife;
 
   applyQuestBackground(quest);
   const stageElement = $("stage");
@@ -1447,7 +1661,28 @@ function renderQuestion() {
   if ($("progressInline")) $("progressInline").textContent = `${state.questionCount}問目`;
   updateEnemyLifeBar();
   $("jaText").textContent = state.currentWord.ja;
-  $("hintText").textContent = "ヒントボタンで読み方を表示できます。";
+  const phraseMode = isPhraseItem(state.currentWord);
+  const longWritingMode = state.currentWord.type === "long_sentence";
+  const phraseSentence = $("phraseSentence");
+  const questionSmall = document.querySelector(".question-box .question-small");
+  $("answerInput").classList.toggle("long-writing-input", longWritingMode);
+  if (longWritingMode) {
+    if (questionSmall) questionSmall.innerHTML = `<span id="progressInline">${state.questionCount}問目</span>　日本語を英文にしよう！`;
+    phraseSentence.classList.add("hidden");
+    phraseSentence.innerHTML = "";
+    $("hintText").textContent = "英文を最初から最後まで入力しよう。大文字・小文字は区別しません。";
+  } else if (phraseMode) {
+    if (questionSmall) questionSmall.innerHTML = `<span id="progressInline">${state.questionCount}問目</span>　${state.currentWord.type === "test_phrase" ? "この日本語を熟語にすると？" : "空欄に入る熟語を入力しよう！"}`;
+    const blanks = Array.from({length: state.currentWord.blankCount || normalizeAnswer(getPrimaryAnswer(state.currentWord)).split(" ").length}, () => `<span class="phrase-blank">（　　　）</span>`).join(" ");
+    phraseSentence.innerHTML = `${state.currentWord.sentenceBefore ? `<span>${state.currentWord.sentenceBefore}</span> ` : ""}${blanks}${state.currentWord.sentenceAfter ? ` <span>${state.currentWord.sentenceAfter}</span>` : ""}`;
+    phraseSentence.classList.remove("hidden");
+    $("hintText").textContent = `空欄は${state.currentWord.blankCount || 1}語です。`;
+  } else {
+    if (questionSmall) questionSmall.innerHTML = `<span id="progressInline">${state.questionCount}問目</span>　この日本語を英単語にすると？`;
+    phraseSentence.classList.add("hidden");
+    phraseSentence.innerHTML = "";
+    $("hintText").textContent = "ヒントボタンで読み方を表示できます。";
+  }
   if ($("hintBtn")) $("hintBtn").disabled = false;
 
   if (!window.matchMedia("(max-width: 560px)").matches) {
@@ -1518,7 +1753,7 @@ function answer(userAnswer, word) {
 
   const acceptedAnswers = getAcceptedAnswers(word);
   const isCorrect = acceptedAnswers.includes(userAnswer);
-  const correctAnswer = word.en;
+  const correctAnswer = getPrimaryAnswer(word);
 
   $("answerInput").disabled = true;
   $("answerBtn").disabled = true;
@@ -1530,22 +1765,28 @@ function answer(userAnswer, word) {
     state.gainExp += 10;
     state.enemyLife = Math.max(0, state.enemyLife - 1);
     state.battleDeck.shift();
-    registerCorrect(word);
+    if (!word.skipStats) registerCorrect(word);
     showPencilAttack();
     showDamage("やるな！", "enemy");
-    addBattleLog(`正解！ ${word.en}で攻撃。${state.currentQuest.boss}のライフ ${state.enemyLife}/${state.enemyMaxLife}`, "good");
+    addBattleLog(`正解！ ${isPhraseItem(word) ? correctAnswer : word.en}で攻撃。${state.currentQuest.boss}のライフ ${state.enemyLife}/${state.enemyMaxLife}`, "good");
     $("resultTitle").textContent = "正解！";
-    $("resultDetail").textContent = `「${word.ja}」は ${correctAnswer}。読み方：${word.pron || "確認中"}。正答率：${getMasterRateText(word.id)}。`;
+    $("resultDetail").textContent = word.type === "long_sentence"
+      ? `答えは「${(word.displayAnswers || [correctAnswer]).join('」または「')}」`
+      : isPhraseItem(word)
+        ? `正解：${correctAnswer}。熟語：${word.phrase}（${word.meaning || word.ja}）。`
+        : `「${word.ja}」は ${correctAnswer}。読み方：${word.pron || "確認中"}。正答率：${getMasterRateText(word.id)}。`;
   } else {
     $("answerInput").classList.add("wrong");
     state.save.playerLife = Math.max(0, state.save.playerLife - 1);
     // 間違えた問題は正解するまで、すぐに同じ問題を出す
-    registerWrong(word);
+    if (!word.skipStats) registerWrong(word);
     showEnemyAttack();
     showDamage("油断したな！", "enemy", "player");
-    addBattleLog(`ミス… 正解は ${correctAnswer}。同じ問題にもう一度挑戦！ ムギのライフ ${state.save.playerLife}/${PLAYER_MAX_LIFE}`, "bad");
+    addBattleLog(`ミス… 正解は ${correctAnswer}。同じ問題にもう一度挑戦！ ムギのライフ ${state.save.playerLife}/${state.playerMaxLife || PLAYER_MAX_LIFE}`, "bad");
     $("resultTitle").textContent = "Miss!";
-    $("resultDetail").textContent = `入力：${userAnswer} / 正解：${correctAnswer}。「${word.ja}」は ${correctAnswer}。読み方：${word.pron || "確認中"}。`;
+    $("resultDetail").textContent = isPhraseItem(word)
+      ? `入力：${userAnswer} / 正解：${correctAnswer}。熟語：${word.phrase}（${word.meaning || word.ja}）。`
+      : `入力：${userAnswer} / 正解：${correctAnswer}。「${word.ja}」は ${correctAnswer}。読み方：${word.pron || "確認中"}。`;
   }
 
   $("hintText").textContent = `答え：${correctAnswer}`;
@@ -1641,7 +1882,9 @@ function finishQuest(cleared) {
 
   $("clearTitle").textContent = cleared ? "ステージクリア！" : "ムギはつかれてしまった…";
   $("clearMessage").textContent = cleared
-    ? `${state.currentQuest.boss}を倒しました。完全習得は「5回以上正解」かつ「正答率80％以上」で登録されます。`
+    ? (state.currentQuest.mode === "unit2_test_prep"
+        ? `${state.currentQuest.boss}を倒しました。単語20語の結果は単語図鑑の正答率に反映されています。熟語5問はテスト対策専用で、熟語図鑑の成績には反映されません。`
+        : `${state.currentQuest.boss}を倒しました。完全習得は「${state.currentQuest.wordType === "phrase" ? 3 : 5}回以上正解」かつ「正答率80％以上」で登録されます。`)
     : `${state.currentQuest.boss}を倒せませんでした。でも、覚えた単語は記録されています。もう一度チャレンジしよう！`;
   $("correctCount").textContent = `${state.correct} 問`;
   $("gainExp").textContent = `${state.enemyLife} / ${state.enemyMaxLife}`;
@@ -1659,6 +1902,7 @@ function resetData() {
   localStorage.removeItem(SAVE_KEY);
   state.save = { playerLife: PLAYER_MAX_LIFE, exp: 0, learned: {}, mastered: {}, clearedQuests: {} };
   state.currentQuest = null;
+  state.playerMaxLife = PLAYER_MAX_LIFE;
   state.enemyLife = 0;
   state.enemyMaxLife = 0;
   state.battleLog = [];
@@ -1674,8 +1918,15 @@ function resetData() {
 
 function showHint() {
   if (!state.currentWord) return;
-  const pron = state.currentWord.pron || "読み方は準備中";
-  $("hintText").textContent = `読み方：${pron}`;
+  if (state.currentWord.type === "long_sentence") {
+    $("hintText").textContent = "ヒント：語順とつづりに注意して、英文全体を入力しよう。";
+  } else if (isPhraseItem(state.currentWord)) {
+    const pron = state.currentWord.pron || "";
+    $("hintText").textContent = `読み方：${pron}／意味：${state.currentWord.meaning || state.currentWord.ja}／${state.currentWord.blankCount || 1}語`;
+  } else {
+    const pron = state.currentWord.pron || "読み方は準備中";
+    $("hintText").textContent = `読み方：${pron}`;
+  }
   if ($("hintBtn")) $("hintBtn").disabled = true;
 }
 
@@ -1711,18 +1962,23 @@ function bindEvents() {
   if ($("mobileGrade1Btn")) $("mobileGrade1Btn").addEventListener("click", () => { closeMobileMenu(); setSelectedGrade(1); showScreen("screenHome"); });
   if ($("mobileGrade2Btn")) $("mobileGrade2Btn").addEventListener("click", () => { closeMobileMenu(); setSelectedGrade(2); showScreen("screenHome"); });
   if ($("mobileWordBookBtn")) $("mobileWordBookBtn").addEventListener("click", () => { closeMobileMenu(); openWordBook(); });
+  if ($("mobilePhraseBookBtn")) $("mobilePhraseBookBtn").addEventListener("click", () => { closeMobileMenu(); openPhraseBook(); });
   if ($("mobileResetBtn")) $("mobileResetBtn").addEventListener("click", () => { closeMobileMenu(); resetData(); });
   if ($("grade1Btn")) $("grade1Btn").addEventListener("click", () => setSelectedGrade(1));
   if ($("grade2Btn")) $("grade2Btn").addEventListener("click", () => setSelectedGrade(2));
   $("openWordBookBtn").addEventListener("click", openWordBook);
+  if ($("openPhraseBookBtn")) $("openPhraseBookBtn").addEventListener("click", openPhraseBook);
   document.querySelectorAll("[data-wordbook-grade]").forEach(btn => {
     btn.addEventListener("click", () => setWordBookGradeFilter(btn.dataset.wordbookGrade));
   });
   document.querySelectorAll("[data-wordbook-status]").forEach(btn => {
     btn.addEventListener("click", () => setWordBookStatusFilter(btn.dataset.wordbookStatus));
   });
+  document.querySelectorAll("[data-phrasebook-grade]").forEach(btn => btn.addEventListener("click", () => setPhraseBookGradeFilter(btn.dataset.phrasebookGrade)));
+  document.querySelectorAll("[data-phrasebook-status]").forEach(btn => btn.addEventListener("click", () => setPhraseBookStatusFilter(btn.dataset.phrasebookStatus)));
   if ($("hintBtn")) $("hintBtn").addEventListener("click", showHint);
   $("wordBookBackBtn").addEventListener("click", closeWordBook);
+  if ($("phraseBookBackBtn")) $("phraseBookBackBtn").addEventListener("click", closePhraseBook);
   $("backBtn").addEventListener("click", () => {
     renderQuests();
     renderLearningDashboard();

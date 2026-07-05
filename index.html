@@ -25,6 +25,7 @@
         <button id="mobileGrade1Btn" type="button">１年生</button>
         <button id="mobileGrade2Btn" type="button">２年生</button>
         <button id="mobileWordBookBtn" type="button">単語図鑑</button>
+        <button id="mobilePhraseBookBtn" type="button">熟語図鑑</button>
         <button id="mobileResetBtn" type="button" class="danger-menu-item">データリセット</button>
         <button id="mobileMenuCloseBtn" type="button" class="menu-close-item">閉じる</button>
       </div>
@@ -41,7 +42,8 @@
           <button id="grade1Btn" class="grade-tab" type="button" data-grade="1">１年生</button>
           <button id="grade2Btn" class="grade-tab active" type="button" data-grade="2">２年生</button>
         </div>
-        <button id="openWordBookBtn" class="ghost-btn wordbook-open-btn" type="button">単語図鑑を開く</button>
+        <button id="openWordBookBtn" class="ghost-btn wordbook-open-btn" type="button">単語図鑑</button>
+        <button id="openPhraseBookBtn" class="ghost-btn wordbook-open-btn" type="button">熟語図鑑</button>
         <button id="resetBtn" class="ghost-btn" type="button">データリセット</button>
       </div>
     </header>
@@ -113,6 +115,7 @@
             <button id="backBtn" class="ghost-btn question-back-btn" type="button">戻る</button>
             <p class="question-small"><span id="progressInline">1問目</span>　この日本語を英単語にすると？</p>
             <div id="jaText" class="word-text">塩</div>
+            <div id="phraseSentence" class="phrase-sentence hidden" aria-label="熟語穴埋め問題"></div>
             <div class="hint-row">
               <button id="hintBtn" class="hint-btn" type="button">ヒント</button>
               <div id="hintText" class="pron-text">ヒントボタンで読み方を表示できます。</div>
@@ -168,6 +171,35 @@
             </div>
           </div>
           <div id="wordBookList" class="wordbook-list"></div>
+        </div>
+
+
+        <div id="screenPhraseBook" class="screen wordbook-screen phrasebook-screen">
+          <div class="wordbook-page-head">
+            <div>
+              <p class="quest-label">学習記録</p>
+              <h2>熟語図鑑</h2>
+              <p class="lead">熟語の意味と学習状況を確認できます。完全習得は3回以上正解かつ正答率80％以上です。</p>
+            </div>
+            <button id="phraseBookBackBtn" class="ghost-btn" type="button">戻る</button>
+          </div>
+          <div id="phraseLevelBox" class="word-level-box"></div>
+          <div class="wordbook-filter-panel" aria-label="熟語図鑑フィルター">
+            <div class="wordbook-filter-group">
+              <span class="wordbook-filter-label">学年</span>
+              <button class="wordbook-filter-btn active" type="button" data-phrasebook-grade="all">すべて</button>
+              <button class="wordbook-filter-btn" type="button" data-phrasebook-grade="1">１年生</button>
+              <button class="wordbook-filter-btn" type="button" data-phrasebook-grade="2">２年生</button>
+            </div>
+            <div class="wordbook-filter-group">
+              <span class="wordbook-filter-label">状態</span>
+              <button class="wordbook-filter-btn active" type="button" data-phrasebook-status="all">すべて</button>
+              <button class="wordbook-filter-btn" type="button" data-phrasebook-status="undiscovered">未発見</button>
+              <button class="wordbook-filter-btn" type="button" data-phrasebook-status="learned">1回以上正解</button>
+              <button class="wordbook-filter-btn" type="button" data-phrasebook-status="mastered">完全習得</button>
+            </div>
+          </div>
+          <div id="phraseBookList" class="wordbook-list"></div>
         </div>
 
         <div id="screenResult" class="screen result-screen">

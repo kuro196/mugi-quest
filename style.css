@@ -1279,6 +1279,22 @@ code {
   line-height: 1.12;
 }
 
+
+/* Unit2テスト対策ダンジョン：ムギの10ライフを5個×2段で表示 */
+.player-stage-life.player-life-two-rows {
+  flex-direction: column;
+  gap: 3px;
+  letter-spacing: 0;
+  white-space: normal;
+}
+
+.player-stage-life.player-life-two-rows .player-heart-row {
+  display: block;
+  line-height: 1;
+  white-space: nowrap;
+  letter-spacing: 2px;
+}
+
 .enemy-stage-life {
   color: #ff9f1c;
   border-color: rgba(255, 159, 28, 0.42);
@@ -2029,5 +2045,106 @@ code {
     text-overflow: clip;
     overflow-wrap: anywhere;
     word-break: break-word;
+  }
+}
+
+
+/* ===== Phrase dungeon & phrasebook v29 ===== */
+.phrase-sentence {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 2px dashed rgba(46,125,50,.32);
+  border-radius: 14px;
+  background: rgba(255,255,255,.78);
+  font-size: clamp(20px, 2.4vw, 30px);
+  line-height: 1.7;
+  font-weight: 900;
+  color: var(--ink);
+}
+.phrase-sentence.hidden { display:none; }
+.phrase-blank { white-space: nowrap; color: #2f8b4d; letter-spacing: .02em; }
+.phrasebook-table .wordbook-row {
+  grid-template-columns: minmax(70px,.45fr) minmax(170px,1.2fr) minmax(220px,1.5fr) minmax(140px,.9fr) minmax(80px,.55fr) minmax(80px,.55fr) minmax(170px,1.1fr);
+  min-width: 980px;
+}
+.phrase-en { font-weight: 950; color: #284231; }
+.phrase-ja { white-space: normal !important; line-height: 1.4; }
+@media (max-width:560px) {
+  .game-shell.screen-battle-mode .phrase-sentence {
+    margin-top: 6px; padding: 7px 9px; font-size: 15px; line-height: 1.45;
+  }
+  .game-shell.wordbook-mode .phrasebook-table .wordbook-row span {
+    white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; word-break: break-word; line-height: 1.35;
+  }
+}
+
+/* ===== Ver1.0 mobile Unit record compact layout v35 ===== */
+.unit-summary-row {
+  grid-template-columns: minmax(86px, 0.8fr) minmax(242px, 2fr);
+}
+
+.unit-metrics-box {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .learning-side .unit-summary-row,
+  .unit-summary-row {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .unit-name {
+    padding: 7px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+
+  .unit-metrics-box {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    background: #f6fbf5;
+  }
+
+  .unit-metrics-box .unit-metric {
+    padding: 8px 9px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .unit-metrics-box .unit-metric + .unit-metric {
+    border-left: 1px solid var(--line);
+  }
+
+  .unit-metrics-box .unit-metric.master {
+    background: #fff8e7;
+  }
+
+  .unit-metrics-box .unit-metric span {
+    font-size: 10px;
+    white-space: nowrap;
+    margin-bottom: 3px;
+  }
+
+  .unit-metrics-box .unit-metric strong {
+    font-size: 18px;
+    line-height: 1.05;
+  }
+}
+
+
+/* ===== Unit2 long writing test prep v36 ===== */
+.answer-input.long-writing-input {
+  font-size: 0.98rem;
+}
+@media (max-width: 560px) {
+  .answer-input.long-writing-input {
+    font-size: 0.88rem;
   }
 }
