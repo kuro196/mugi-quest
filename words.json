@@ -14734,5 +14734,756 @@
     "answers": [
       "smoke"
     ]
+  },
+  {
+    "id": "u3_001",
+    "unit": "Unit3",
+    "area": "dungeon1",
+    "floor": 1,
+    "type": "word",
+    "en": "picture book",
+    "ja": "（主に子供用の）絵本、図鑑",
+    "pron": "ピクチャー ブック",
+    "pos": "名",
+    "answers": [
+      "picture book"
+    ],
+    "no": "104"
+  },
+  {
+    "id": "u3_002",
+    "unit": "Unit3",
+    "area": "dungeon1",
+    "floor": 1,
+    "type": "word",
+    "en": "nursery",
+    "ja": "保育所、託児所",
+    "pron": "ナーサリー",
+    "pos": "名",
+    "answers": [
+      "nursery"
+    ],
+    "no": "105"
+  },
+  {
+    "id": "u3_003",
+    "unit": "Unit3",
+    "area": "dungeon1",
+    "floor": 1,
+    "type": "word",
+    "en": "career",
+    "ja": "職業",
+    "pron": "キャリア",
+    "pos": "名",
+    "answers": [
+      "career"
+    ],
+    "no": "106"
+  },
+  {
+    "id": "u3_004",
+    "unit": "Unit3",
+    "area": "dungeon1",
+    "floor": 1,
+    "type": "word",
+    "en": "Career Day",
+    "ja": "職業体験日",
+    "pron": "キャリア デイ",
+    "pos": "固有名詞",
+    "answers": [
+      "career day"
+    ],
+    "no": "107"
+  },
+  {
+    "id": "u3_005",
+    "unit": "Unit3",
+    "area": "dungeon1",
+    "floor": 1,
+    "type": "word",
+    "en": "information",
+    "ja": "情報",
+    "pron": "インフォメーション",
+    "pos": "名",
+    "answers": [
+      "information"
+    ],
+    "no": "108"
+  },
+  {
+    "id": "u3_006",
+    "unit": "Unit3",
+    "area": "dungeon1",
+    "floor": 1,
+    "type": "word",
+    "en": "international",
+    "ja": "国際的な",
+    "pron": "インターナショナル",
+    "pos": "形",
+    "answers": [
+      "international"
+    ],
+    "no": "109"
+  },
+  {
+    "id": "u3_007",
+    "unit": "Unit3",
+    "area": "dungeon1",
+    "floor": 1,
+    "type": "word",
+    "en": "note",
+    "ja": "メモ、覚え書き",
+    "pron": "ノート",
+    "pos": "名",
+    "answers": [
+      "note"
+    ],
+    "no": "110"
+  },
+  {
+    "id": "u3_008",
+    "unit": "Unit3",
+    "area": "dungeon1",
+    "floor": 1,
+    "type": "word",
+    "en": "own",
+    "ja": "自分自身の、独自の",
+    "pron": "オウン",
+    "pos": "形",
+    "answers": [
+      "own"
+    ],
+    "no": "111"
+  },
+  {
+    "id": "u3_009",
+    "unit": "Unit3",
+    "area": "dungeon1",
+    "floor": 1,
+    "type": "word",
+    "en": "tag",
+    "ja": "つけ札、下げ札、荷札",
+    "pron": "タグ",
+    "pos": "名",
+    "answers": [
+      "tag"
+    ],
+    "no": "112"
+  },
+  {
+    "id": "u3_010",
+    "unit": "Unit3",
+    "area": "dungeon1",
+    "floor": 1,
+    "type": "word",
+    "en": "chopstick",
+    "ja": "（食事用の）はし",
+    "pron": "チョップスティック",
+    "pos": "名",
+    "answers": [
+      "chopstick",
+      "chopsticks"
+    ],
+    "no": "113"
+  },
+  {
+    "id": "u3_011",
+    "unit": "Unit3",
+    "area": "dungeon2",
+    "floor": 2,
+    "type": "word",
+    "en": "to",
+    "ja": "【不定詞（副詞的）】…するために［目的を表す］",
+    "pron": "トゥ",
+    "pos": "助",
+    "answers": [
+      "to"
+    ],
+    "no": "114"
+  },
+  {
+    "id": "u3_012",
+    "unit": "Unit3",
+    "area": "dungeon2",
+    "floor": 2,
+    "type": "word",
+    "en": "play",
+    "ja": "遊ぶ",
+    "pron": "プレイ",
+    "pos": "動",
+    "answers": [
+      "play"
+    ],
+    "no": "115"
+  },
+  {
+    "id": "u3_013",
+    "unit": "Unit3",
+    "area": "dungeon2",
+    "floor": 2,
+    "type": "word",
+    "en": "park",
+    "ja": "（自転車などを）駐車する",
+    "pron": "パーク",
+    "pos": "動",
+    "answers": [
+      "park"
+    ],
+    "no": "116"
+  },
+  {
+    "id": "u3_014",
+    "unit": "Unit3",
+    "area": "dungeon2",
+    "floor": 2,
+    "type": "word",
+    "en": "choose",
+    "ja": "…を選ぶ",
+    "pron": "チューズ",
+    "pos": "動",
+    "answers": [
+      "choose"
+    ],
+    "no": "117"
+  },
+  {
+    "id": "u3_015",
+    "unit": "Unit3",
+    "area": "dungeon2",
+    "floor": 2,
+    "type": "word",
+    "en": "chose",
+    "ja": "choose の過去形",
+    "pron": "チョウズ",
+    "pos": "動",
+    "answers": [
+      "chose"
+    ],
+    "no": "118"
+  },
+  {
+    "id": "u3_017",
+    "unit": "Unit3",
+    "area": "dungeon2",
+    "floor": 2,
+    "type": "word",
+    "en": "The Very Hungry Caterpillar",
+    "ja": "『はらぺこあおむし』",
+    "pron": "ザ ベリー ハングリー キャタピラー",
+    "pos": "固有名詞",
+    "answers": [
+      "the very hungry caterpillar"
+    ],
+    "no": "119"
+  },
+  {
+    "id": "u3_018",
+    "unit": "Unit3",
+    "area": "dungeon2",
+    "floor": 2,
+    "type": "word",
+    "en": "colorful",
+    "ja": "色彩に富んだ",
+    "pron": "カラフル",
+    "pos": "形",
+    "answers": [
+      "colorful"
+    ],
+    "no": "120"
+  },
+  {
+    "id": "u3_019",
+    "unit": "Unit3",
+    "area": "dungeon2",
+    "floor": 2,
+    "type": "word",
+    "en": "illustration",
+    "ja": "例、挿絵、図、イラスト、（図・例などによる）説明",
+    "pron": "イラストレーション",
+    "pos": "名",
+    "answers": [
+      "illustration"
+    ],
+    "no": "121"
+  },
+  {
+    "id": "u3_020",
+    "unit": "Unit3",
+    "area": "dungeon2",
+    "floor": 2,
+    "type": "word",
+    "en": "to",
+    "ja": "【不定詞（副詞的）】…して［原因を表す］",
+    "pron": "トゥ",
+    "pos": "助",
+    "answers": [
+      "to"
+    ],
+    "no": "122"
+  },
+  {
+    "id": "u3_021",
+    "unit": "Unit3",
+    "area": "dungeon2",
+    "floor": 2,
+    "type": "word",
+    "en": "pretty",
+    "ja": "かわいい、きれいな",
+    "pron": "プリティ",
+    "pos": "形",
+    "answers": [
+      "pretty"
+    ],
+    "no": "123"
+  },
+  {
+    "id": "u3_022",
+    "unit": "Unit3",
+    "area": "dungeon3",
+    "floor": 3,
+    "type": "word",
+    "en": "teach",
+    "ja": "～に（…を）教える",
+    "pron": "ティーチ",
+    "pos": "動",
+    "answers": [
+      "teach"
+    ],
+    "no": "124"
+  },
+  {
+    "id": "u3_023",
+    "unit": "Unit3",
+    "area": "dungeon3",
+    "floor": 3,
+    "type": "word",
+    "en": "taught",
+    "ja": "teach の過去形",
+    "pron": "トート",
+    "pos": "動",
+    "answers": [
+      "taught"
+    ],
+    "no": "125"
+  },
+  {
+    "id": "u3_024",
+    "unit": "Unit3",
+    "area": "dungeon3",
+    "floor": 3,
+    "type": "word",
+    "en": "important",
+    "ja": "重要な、大切な",
+    "pron": "インポータント",
+    "pos": "形",
+    "answers": [
+      "important"
+    ],
+    "no": "126"
+  },
+  {
+    "id": "u3_025",
+    "unit": "Unit3",
+    "area": "dungeon3",
+    "floor": 3,
+    "type": "word",
+    "en": "start",
+    "ja": "（…を）始める",
+    "pron": "スタート",
+    "pos": "動",
+    "answers": [
+      "start"
+    ],
+    "no": "127"
+  },
+  {
+    "id": "u3_026",
+    "unit": "Unit3",
+    "area": "dungeon3",
+    "floor": 3,
+    "type": "word",
+    "en": "light",
+    "ja": "光",
+    "pron": "ライト",
+    "pos": "名",
+    "answers": [
+      "light"
+    ],
+    "no": "128"
+  },
+  {
+    "id": "u3_027",
+    "unit": "Unit3",
+    "area": "dungeon3",
+    "floor": 3,
+    "type": "word",
+    "en": "moon",
+    "ja": "（天体の）月",
+    "pron": "ムーン",
+    "pos": "名",
+    "answers": [
+      "moon"
+    ],
+    "no": "129"
+  },
+  {
+    "id": "u3_028",
+    "unit": "Unit3",
+    "area": "dungeon3",
+    "floor": 3,
+    "type": "word",
+    "en": "lie",
+    "ja": "位置する、ある",
+    "pron": "ライ",
+    "pos": "動",
+    "answers": [
+      "lie"
+    ],
+    "no": "130"
+  },
+  {
+    "id": "u3_029",
+    "unit": "Unit3",
+    "area": "dungeon3",
+    "floor": 3,
+    "type": "word",
+    "en": "lay",
+    "ja": "lie の過去形",
+    "pron": "レイ",
+    "pos": "動",
+    "answers": [
+      "lay"
+    ],
+    "no": "131"
+  },
+  {
+    "id": "u3_030",
+    "unit": "Unit3",
+    "area": "dungeon3",
+    "floor": 3,
+    "type": "word",
+    "en": "leaf",
+    "ja": "（草木の）葉",
+    "pron": "リーフ",
+    "pos": "名",
+    "answers": [
+      "leaf"
+    ],
+    "no": "132"
+  },
+  {
+    "id": "u3_032",
+    "unit": "Unit3",
+    "area": "dungeon3",
+    "floor": 3,
+    "type": "word",
+    "en": "pop",
+    "ja": "ポンと鳴る音",
+    "pron": "ポップ",
+    "pos": "名",
+    "answers": [
+      "pop"
+    ],
+    "no": "133"
+  },
+  {
+    "id": "u3_034",
+    "unit": "Unit3",
+    "area": "dungeon4",
+    "floor": 4,
+    "type": "word",
+    "en": "tiny",
+    "ja": "ごく小さい",
+    "pron": "タイニー",
+    "pos": "形",
+    "answers": [
+      "tiny"
+    ],
+    "no": "134"
+  },
+  {
+    "id": "u3_035",
+    "unit": "Unit3",
+    "area": "dungeon4",
+    "floor": 4,
+    "type": "word",
+    "en": "caterpillar",
+    "ja": "イモムシ、毛虫",
+    "pron": "キャタピラー",
+    "pos": "名",
+    "answers": [
+      "caterpillar"
+    ],
+    "no": "135"
+  },
+  {
+    "id": "u3_036",
+    "unit": "Unit3",
+    "area": "dungeon4",
+    "floor": 4,
+    "type": "word",
+    "en": "pear",
+    "ja": "西洋ナシ、西洋ナシの木",
+    "pron": "ペア",
+    "pos": "名",
+    "answers": [
+      "pear"
+    ],
+    "no": "136"
+  },
+  {
+    "id": "u3_039",
+    "unit": "Unit3",
+    "area": "dungeon4",
+    "floor": 4,
+    "type": "word",
+    "en": "learn",
+    "ja": "（…を）学ぶ、習う",
+    "pron": "ラーン",
+    "pos": "動",
+    "answers": [
+      "learn"
+    ],
+    "no": "137"
+  },
+  {
+    "id": "u3_040",
+    "unit": "Unit3",
+    "area": "dungeon4",
+    "floor": 4,
+    "type": "word",
+    "en": "it",
+    "ja": "［It is ... (for＋人)＋to＋動詞の原形 で］（人が）～することは…です",
+    "pron": "イット",
+    "pos": "代",
+    "answers": [
+      "it"
+    ],
+    "no": "138"
+  },
+  {
+    "id": "u3_041",
+    "unit": "Unit3",
+    "area": "dungeon4",
+    "floor": 4,
+    "type": "word",
+    "en": "second",
+    "ja": "第2に、2番めに",
+    "pron": "セカンド",
+    "pos": "副",
+    "answers": [
+      "second"
+    ],
+    "no": "139"
+  },
+  {
+    "id": "u3_042",
+    "unit": "Unit3",
+    "area": "dungeon4",
+    "floor": 4,
+    "type": "word",
+    "en": "necessary",
+    "ja": "必要な",
+    "pron": "ネセサリー",
+    "pos": "形",
+    "answers": [
+      "necessary"
+    ],
+    "no": "140"
+  },
+  {
+    "id": "u3_043",
+    "unit": "Unit3",
+    "area": "dungeon4",
+    "floor": 4,
+    "type": "word",
+    "en": "adjust",
+    "ja": "…を調節する",
+    "pron": "アジャスト",
+    "pos": "動",
+    "answers": [
+      "adjust"
+    ],
+    "no": "141"
+  },
+  {
+    "id": "u3_044",
+    "unit": "Unit3",
+    "area": "dungeon4",
+    "floor": 4,
+    "type": "word",
+    "en": "speed",
+    "ja": "スピード、速度",
+    "pron": "スピード",
+    "pos": "名",
+    "answers": [
+      "speed"
+    ],
+    "no": "142"
+  },
+  {
+    "id": "u3_045",
+    "unit": "Unit3",
+    "area": "dungeon4",
+    "floor": 4,
+    "type": "word",
+    "en": "story",
+    "ja": "話、物語",
+    "pron": "ストーリー",
+    "pos": "名",
+    "answers": [
+      "story"
+    ],
+    "no": "143"
+  },
+  {
+    "id": "u3_046",
+    "unit": "Unit3",
+    "area": "dungeon5",
+    "floor": 5,
+    "type": "word",
+    "en": "difficult",
+    "ja": "難しい、困難な",
+    "pron": "ディフィカルト",
+    "pos": "形",
+    "answers": [
+      "difficult"
+    ],
+    "no": "144"
+  },
+  {
+    "id": "u3_047",
+    "unit": "Unit3",
+    "area": "dungeon5",
+    "floor": 5,
+    "type": "word",
+    "en": "sentence",
+    "ja": "文",
+    "pron": "センテンス",
+    "pos": "名",
+    "answers": [
+      "sentence"
+    ],
+    "no": "145"
+  },
+  {
+    "id": "u3_048",
+    "unit": "Unit3",
+    "area": "dungeon5",
+    "floor": 5,
+    "type": "word",
+    "en": "clearly",
+    "ja": "はっきりと",
+    "pron": "クリアリー",
+    "pos": "副",
+    "answers": [
+      "clearly"
+    ],
+    "no": "146"
+  },
+  {
+    "id": "u3_049",
+    "unit": "Unit3",
+    "area": "dungeon5",
+    "floor": 5,
+    "type": "word",
+    "en": "understand",
+    "ja": "（…を）理解する、わかる",
+    "pron": "アンダースタンド",
+    "pos": "動",
+    "answers": [
+      "understand"
+    ],
+    "no": "147"
+  },
+  {
+    "id": "u3_050",
+    "unit": "Unit3",
+    "area": "dungeon5",
+    "floor": 5,
+    "type": "word",
+    "en": "smile",
+    "ja": "ほほえむ、微笑する",
+    "pron": "スマイル",
+    "pos": "動",
+    "answers": [
+      "smile"
+    ],
+    "no": "148"
+  },
+  {
+    "id": "u3_051",
+    "unit": "Unit3",
+    "area": "dungeon5",
+    "floor": 5,
+    "type": "word",
+    "en": "clap",
+    "ja": "（手）をたたく、（人・演技など）に拍手する",
+    "pron": "クラップ",
+    "pos": "動",
+    "answers": [
+      "clap"
+    ],
+    "no": "149"
+  },
+  {
+    "id": "u3_052",
+    "unit": "Unit3",
+    "area": "dungeon5",
+    "floor": 5,
+    "type": "word",
+    "en": "glad",
+    "ja": "うれしい",
+    "pron": "グラッド",
+    "pos": "形",
+    "answers": [
+      "glad"
+    ],
+    "no": "150"
+  },
+  {
+    "id": "u3_054",
+    "unit": "Unit3",
+    "area": "dungeon5",
+    "floor": 5,
+    "type": "word",
+    "en": "out",
+    "ja": "はっきりと、大声で",
+    "pron": "アウト",
+    "pos": "副",
+    "answers": [
+      "out"
+    ],
+    "no": "151"
+  },
+  {
+    "id": "u3_055",
+    "unit": "Unit3",
+    "area": "dungeon5",
+    "floor": 5,
+    "type": "word",
+    "en": "loud",
+    "ja": "大きな声で",
+    "pron": "ラウド",
+    "pos": "副",
+    "answers": [
+      "loud"
+    ],
+    "no": "152"
+  },
+  {
+    "id": "u3_056",
+    "unit": "Unit3",
+    "area": "dungeon5",
+    "floor": 5,
+    "type": "word",
+    "en": "sincerely",
+    "ja": "心から、本気で、誠実に",
+    "pron": "シンシアリー",
+    "pos": "副",
+    "answers": [
+      "sincerely"
+    ],
+    "no": "153"
   }
 ]

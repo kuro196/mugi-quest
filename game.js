@@ -208,6 +208,79 @@ const quests = [
     unit: "Unit2",
     wordType: "long_writing"
   }
+  ,
+  {
+    id: "unit3_dungeon_1f",
+    title: "Unit3ダンジョン 1F",
+    boss: "ゴブリンボーイ1",
+    bossLife: 10,
+    enemyImg: "images/enemies/goblin_boy.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "area",
+    unit: "Unit3",
+    area: "dungeon1",
+    wordType: "word"
+  },
+  {
+    id: "unit3_dungeon_2f",
+    title: "Unit3ダンジョン 2F",
+    boss: "ゴブリンボーイ2",
+    bossLife: 10,
+    enemyImg: "images/enemies/goblin_boy.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "area",
+    unit: "Unit3",
+    area: "dungeon2",
+    wordType: "word"
+  },
+  {
+    id: "unit3_dungeon_3f",
+    title: "Unit3ダンジョン 3F",
+    boss: "ゴブリンボーイ3",
+    bossLife: 10,
+    enemyImg: "images/enemies/goblin_boy.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "area",
+    unit: "Unit3",
+    area: "dungeon3",
+    wordType: "word"
+  },
+  {
+    id: "unit3_dungeon_4f",
+    title: "Unit3ダンジョン 4F",
+    boss: "ゴブリンボーイ4",
+    bossLife: 10,
+    enemyImg: "images/enemies/goblin_boy.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "area",
+    unit: "Unit3",
+    area: "dungeon4",
+    wordType: "word"
+  },
+  {
+    id: "unit3_dungeon_5f",
+    title: "Unit3ダンジョン 5F",
+    boss: "ゴブリンボーイ5",
+    bossLife: 10,
+    enemyImg: "images/enemies/goblin_boy.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "area",
+    unit: "Unit3",
+    area: "dungeon5",
+    wordType: "word"
+  },
+  {
+    id: "unit3_dungeon_deepest",
+    title: "Unit3ダンジョン 最深階",
+    boss: "ゴブリンガール",
+    bossLife: 20,
+    enemyImg: "images/enemies/goblin_girl.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "final",
+    unit: "Unit3",
+    wordType: "word"
+  }
+
 
 ];
 
@@ -730,6 +803,8 @@ const ASSET_PATHS = [
   'images/enemies/slime_king.png',
   'images/enemies/ghost.png',
   'images/enemies/ghost_master.png',
+  'images/enemies/goblin_boy.png',
+  'images/enemies/goblin_girl.png',
   'images/backgrounds/dungeon_unit01.png',
   'images/backgrounds/dungeon_unit2.png',
 ];
