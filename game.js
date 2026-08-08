@@ -1,5 +1,7 @@
 const SAVE_KEY = "mugiquest_ver4_save";
 const PLAYER_MAX_LIFE = 5;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const RETRY_GAP = 3;
 
 const state = {
   words: [],
@@ -9,7 +11,11 @@ const state = {
     exp: 0,
     learned: {},
     mastered: {},
-    clearedQuests: {}
+    clearedQuests: {},
+    termTestProgress: {
+      wordTranslation: {},
+      fillWritten: {}
+    }
   },
   currentQuest: null,
   battleDeck: [],
@@ -31,6 +37,278 @@ const state = {
   phraseBookGradeFilter: "all",
   phraseBookStatusFilter: "all"
 };
+
+const GRADE2_TERM_TEST_WORD_SPECS = [
+  // Unit 0
+  { id: "u01_001", ja: "同じ、同一の" },
+  { id: "u01_002", ja: "経験、体験" },
+  { id: "u01_003", ja: "実は、本当は" },
+  { id: "u01_004", ja: "ラーメン" },
+  { id: "u01_005", ja: "緊急の、即席の" },
+  { id: "u01_006", ja: "ヌードル、めん" },
+  { id: "term_test_by_the_way", en: "by the way", ja: "ところで", pron: "バイ ザ ウェイ", answers: ["by the way"], skipStats: true },
+
+  // Unit 1
+  { id: "u01_009", ja: "休日、休暇" },
+  { id: "u01_014", ja: "到着する" },
+  { id: "u01_016", ja: "空港、飛行場" },
+  { id: "u01_017", ja: "すぐに、まもなく" },
+  { id: "u01_021", ja: "…でしょう、…だろう、…するつもりだ" },
+  { id: "u01_026", ja: "わくわくした" },
+  { id: "u01_027", ja: "シーフード" },
+  { id: "u01_028", ja: "予約" },
+  { id: "u01_023", ja: "you will の短縮形" },
+  { id: "u01_024", ja: "I will の短縮形" },
+  { id: "u01_029", ja: "メートル" },
+  { id: "u01_030", ja: "身長［高さ］が…ある" },
+  { id: "u01_031", ja: "…の重さがある" },
+  { id: "u01_032", ja: "トン" },
+  { id: "u01_035", ja: "…を見つける、発見する" },
+  { id: "u01_036", ja: "find の過去形" },
+  { id: "u01_038", ja: "言語、言葉" },
+  { id: "u01_039", ja: "ドル" },
+  { id: "u01_043", ja: "例、実例" },
+  { id: "u01_045", ja: "連絡する、意思の疎通をする" },
+  { id: "u01_047", ja: "絵、絵画" },
+  { id: "u01_050", ja: "驚いた、びっくりした" },
+  { id: "u01_052", ja: "区域、場所、地域" },
+  { id: "u01_058", ja: "文化" },
+
+  // Unit 2
+  { id: "u2_001", ja: "特に、とりわけ" },
+  { id: "u2_003", ja: "…を注文する" },
+  { id: "u2_005", ja: "いろいろな" },
+  { id: "u2_006", ja: "（独特な）味、（香りもふくめた）風味" },
+  { id: "u2_009", ja: "スピーチ、演説" },
+  { id: "u2_010", ja: "いつか、そのうち（8文字で）" },
+  { id: "u2_011", ja: "もし…ならば" },
+  { id: "u2_012", ja: "（～に）…を加える、足す" },
+  { id: "u2_014", ja: "興味を持っている" },
+  { id: "u2_015", ja: "（…を）忘れる" },
+  { id: "u2_016", ja: "種類" },
+  { id: "u2_019", ja: "…だから、…なので" },
+  { id: "u2_020", ja: "濃い、どろっとした" },
+  { id: "u2_021", ja: "おすすめの" },
+  { id: "u2_024", ja: "早く" },
+  { id: "u2_025", ja: "（物事・考えなど）を反映する" },
+  { id: "u2_026", ja: "気候" },
+  { id: "u2_028", ja: "life の複数形" },
+  { id: "u2_029", ja: "創造性［力］、独創性［力］" },
+  { id: "u2_030", ja: "シェフ、コック長" },
+  { id: "u2_031", ja: "外国（へ［から］）の" },
+  { id: "u2_034", ja: "…を創造する、つくり出す" },
+  { id: "u2_039", ja: "変わる、変化する" },
+
+  // Unit 3 part 1
+  { id: "u3_003", ja: "職業" },
+  { id: "u3_005", ja: "情報" },
+  { id: "u3_006", ja: "国際的な" },
+  { id: "u3_002", ja: "保育所、託児所" },
+  { id: "u3_007", ja: "メモ、覚え書き" },
+  { id: "u3_008", ja: "自分自身の、独自の" },
+  { id: "u3_009", ja: "つけ札、荷札" },
+  { id: "u3_010", en: "chopsticks", ja: "（複数形で）はし", answers: ["chopsticks"] },
+  { id: "u3_001", ja: "（子供用）絵本" },
+  { id: "term_test_nursery_school", en: "nursery school", ja: "保育園", pron: "ナーサリー スクール", answers: ["nursery school"], skipStats: true },
+  { id: "u3_004", ja: "職業体験日" }
+];
+
+const GRADE2_TERM_FILL_ITEMS = [
+  // Unit 0 表現チェック
+  { id: "term_fill_u0_01", unit: "Unit 0", ja: "小林さんは今日、忙しくありませんでした。", question: "Mr. Kobayashi ＿＿ not ＿＿ today.", en: "was busy" },
+  { id: "term_fill_u0_02", unit: "Unit 0", ja: "あなたの夏休みはどうでしたか。", question: "＿＿ ＿＿ your summer vacation?", en: "How was" },
+  { id: "term_fill_u0_04", unit: "Unit 0", ja: "名古屋に行きました。", question: "I ＿＿ ＿＿ Nagoya.", en: "went to" },
+  { id: "term_fill_u0_05", unit: "Unit 0", ja: "彼らは買い物をして楽しみました。", question: "They ＿＿ ＿＿.", en: "enjoyed shopping" },
+  { id: "term_fill_u0_06", unit: "Unit 0", ja: "それはすばらしい経験でした。", question: "It ＿＿ a great ＿＿.", en: "was experience" },
+  { id: "term_fill_u0_07", unit: "Unit 0", ja: "私たちは昨日疲れていませんでした。", question: "We ＿＿ not ＿＿ yesterday.", en: "were tired" },
+  { id: "term_fill_u0_08", unit: "Unit 0", ja: "あなたは放課後プールに行きましたか。", question: "＿＿ ＿＿ go to the pool after school?", en: "Did you" },
+  { id: "term_fill_u0_09", unit: "Unit 0", ja: "箱の中にいくつかのボールがあります。", question: "＿＿ ＿＿ some balls in the box.", en: "There are" },
+  { id: "term_fill_u0_10", unit: "Unit 0", ja: "この近くに郵便局はありますか。", question: "＿＿ ＿＿ a post office near here?", en: "Is there" },
+
+  // Unit 1 表現チェック
+  { id: "term_fill_u1_01", unit: "Unit 1", ja: "健は私たちをあちこち案内してくれました。", question: "Ken ＿＿ us ＿＿.", en: "showed around" },
+  { id: "term_fill_u1_02", unit: "Unit 1", ja: "またね。", question: "＿＿ ＿＿.", en: "See you" },
+  { id: "term_fill_u1_03", unit: "Unit 1", ja: "あなたの家は駅から遠いですか。", question: "Is your house ＿＿ ＿＿ the station?", en: "far from" },
+  { id: "term_fill_u1_04", unit: "Unit 1", ja: "予約をしたいのですが。", question: "I'd like to ＿＿ a ＿＿.", en: "make reservation" },
+  { id: "term_fill_u1_05", unit: "Unit 1", ja: "その木は10メートルの高さがあります。", question: "The tree is 10 ＿＿ ＿＿.", en: "meters tall", answers: ["metres tall"] },
+  { id: "term_fill_u1_06", unit: "Unit 1", ja: "今週末、買い物に行きましょう。", question: "Let's ＿＿ ＿＿ this weekend.", en: "go shopping" },
+  { id: "term_fill_u1_07", unit: "Unit 1", ja: "私は、例えばサッカーやラグビーなどのスポーツが好きです。", question: "I like sports, ＿＿ ＿＿, soccer and rugby.", en: "for example" },
+  { id: "term_fill_u1_08", unit: "Unit 1", ja: "私は彼らと英語で意思の疎通をすることができませんでした。", question: "I could not ＿＿ ＿＿ them in English.", en: "communicate with" },
+
+  // Unit 1 Key Sentences 選択問題
+  { id: "term_fill_u1_ks_01", unit: "Unit 1 K.S.", ja: "アヤは明日、昼食を作る予定です。", question: "Aya is going to ＿＿ lunch tomorrow.", en: "make", choices: ["make", "makes", "making", "made"] },
+  { id: "term_fill_u1_ks_02", unit: "Unit 1 K.S.", ja: "私はその塔の写真を撮るつもりです。", question: "I will ＿＿ pictures of the tower.", en: "take", choices: ["to take", "taking", "take", "took"] },
+  { id: "term_fill_u1_ks_03", unit: "Unit 1 K.S.", ja: "私は昨日、彼女にペンをあげました。", question: "I ＿＿ her a pen yesterday.", en: "gave", choices: ["called", "looked", "gave", "give"] },
+  { id: "term_fill_u1_ks_04", unit: "Unit 1 K.S.", ja: "彼らは彼にサッカーボールを買いました。", question: "They bought ＿＿ a soccer ball.", en: "him", choices: ["he", "his", "him", "they"] },
+  { id: "term_fill_u1_ks_05", unit: "Unit 1 K.S.", ja: "私の父は私をナオと呼びます。", question: "My father calls ＿＿ Nao.", en: "me", choices: ["I", "my", "me", "mine"] },
+
+  // Unit 2 表現チェック
+  { id: "term_fill_u2_01", unit: "Unit 2", ja: "メグはサッカー、テニスなどをすることができます。", question: "She can play soccer, tennis, ＿＿ ＿＿ ＿＿.", en: "and so on" },
+  { id: "term_fill_u2_02", unit: "Unit 2", ja: "いつか東京を訪れたいです。", question: "I ＿＿ ＿＿ ＿＿ visit Tokyo someday.", en: "would love to" },
+  { id: "term_fill_u2_03", unit: "Unit 2", ja: "ジムは日本史に興味があります。", question: "Jim is ＿＿ ＿＿ Japanese history.", en: "interested in" },
+  { id: "term_fill_u2_04", unit: "Unit 2", ja: "この公園にはたくさんの種類の植物があります。", question: "There are many ＿＿ ＿＿ plants in this park.", en: "kinds of", answers: ["kinds of"] },
+  { id: "term_fill_u2_05", unit: "Unit 2", ja: "あの男性はイギリスの出身です。", question: "That man ＿＿ ＿＿ the U.K.", en: "comes from" },
+  { id: "term_fill_u2_06", unit: "Unit 2", ja: "ここにおもしろい本があります。", question: "＿＿ ＿＿ an interesting book.", en: "Here is" },
+  { id: "term_fill_u2_07", unit: "Unit 2", ja: "彼女は大好きな俳優にちなんでそのネコをタカと名づけました。", question: "She ＿＿ the cat Taka ＿＿ her favorite actor.", en: "named after" },
+
+  // Unit 2 Key Sentences 選択問題
+  { id: "term_fill_u2_ks_01", unit: "Unit 2 K.S.", ja: "もし明日ここに来るなら、一緒にバスケットボールをしましょう。", question: "If you ＿＿ here tomorrow, let's play basketball together.", en: "come", choices: ["come", "came", "will come", "comes"] },
+  { id: "term_fill_u2_ks_02", unit: "Unit 2 K.S.", ja: "多くの人が祭りに行くと思います。", question: "I think ＿＿ a lot of people will go to the festival.", en: "that", choices: ["when", "if", "that", "because"] },
+  { id: "term_fill_u2_ks_03", unit: "Unit 2 K.S.", ja: "この筆箱はかわいいので買いたいです。", question: "I want to buy this pencil case ＿＿ it's cute.", en: "because", choices: ["so", "because", "but", "when"] },
+  { id: "term_fill_u2_ks_04", unit: "Unit 2 K.S.", ja: "マイは時間があるときにピアノを練習します。", question: "Mai practices the piano ＿＿ she has free time.", en: "when", choices: ["then", "when", "what", "that"] },
+
+  // Unit 2 Key Sentences 空所補充
+  { id: "term_fill_u2_ks_05", unit: "Unit 2 K.S.", ja: "もし今度の土曜日が晴れならば、健二は海に行くつもりです。", question: "Kenji will go to the sea ＿＿ it ＿＿ sunny next Saturday.", en: "if is" },
+  { id: "term_fill_u2_ks_06", unit: "Unit 2 K.S.", ja: "私はこれはいい考えだと思います。", question: "＿＿ ＿＿ this is a good idea.", en: "I think" },
+  { id: "term_fill_u2_ks_07", unit: "Unit 2 K.S.", ja: "理絵は昨日学校に来たとき、疲れているように見えました。", question: "＿＿ Rie ＿＿ to school yesterday, she looked tired.", en: "When came" },
+  { id: "term_fill_u2_ks_08", unit: "Unit 2 K.S.", ja: "博はみんなに親切なので、私は彼が好きです。", question: "＿＿ Hiroshi ＿＿ kind to everyone, I like him.", en: "Because is" },
+  { id: "term_fill_u2_ks_09", unit: "Unit 2 K.S.", ja: "あなたは彼女がダンスが得意なことを知っていますか。", question: "Do you know ＿＿ ＿＿ good at dancing?", en: "she is" },
+  { id: "term_fill_u2_ks_10", unit: "Unit 2 K.S.", ja: "私はこの前の日曜日に動物園に行ったので、今週末は行くつもりはありません。", question: "I'm not going to go to the zoo this weekend ＿＿ I ＿＿ there last Sunday.", en: "because went" },
+
+  // Unit 2 紹介文
+  { id: "term_fill_u2_passage_01", unit: "Unit 2 紹介文", ja: "もんじゃ焼きは東京のご当地料理です。", question: "It's a ＿＿ dish of Tokyo.", en: "local" },
+  { id: "term_fill_u2_passage_02", unit: "Unit 2 紹介文", ja: "とてもおいしいので、もんじゃ焼きが大好きです。", question: "I like monjayaki very much ＿＿ it's delicious.", en: "because" },
+  { id: "term_fill_u2_passage_03", unit: "Unit 2 紹介文", ja: "作るとき、私はわくわくします。", question: "＿＿ I make it, I feel excited.", en: "When" },
+  { id: "term_fill_u2_passage_04", unit: "Unit 2 紹介文", ja: "気に入ってくれるといいと思います。", question: "I ＿＿ you will like it.", en: "hope" },
+
+  // Unit 3 part 1 表現・K.S.チェック
+  { id: "term_fill_u3_01", unit: "Unit 3 part 1", ja: "私は英語を学ぶためにコンピューターを使います。", question: "I ＿＿ a computer ＿＿ ＿＿ English.", en: "use to learn" },
+  { id: "term_fill_u3_02", unit: "Unit 3 part 1", ja: "あなた自身のクロームブックを持ってきなさい。", question: "＿＿ your ＿＿ Chromebook.", en: "Bring own" },
+  { id: "term_fill_u3_03", unit: "Unit 3 part 1", ja: "彼らはケーキを作るためにいくつかの卵を買いました。", question: "They bought some eggs ＿＿ ＿＿ a ＿＿.", en: "to make cake" },
+  { id: "term_fill_u3_04", unit: "Unit 3 part 1", ja: "あなたのごみは持ち帰ってください。", question: "Please ＿＿ your garbage ＿＿ ＿＿.", en: "take back home" },
+  { id: "term_fill_u3_05", unit: "Unit 3 part 1", ja: "彼は走るためにここへ来ました。", question: "He ＿＿ here ＿＿ ＿＿.", en: "came to run" },
+  { id: "term_fill_u3_ks_01", unit: "Unit 3 part 1 K.S.", ja: "ジュンは宿題をするために図書館へ行きました。", question: "Jun went to the ＿＿ to ＿＿ his homework.", en: "library do" },
+  { id: "term_fill_u3_ks_02", unit: "Unit 3 part 1 K.S.", ja: "リサは牛乳を買うためにスーパーへ行きました。", question: "Risa went to the supermarket ＿＿ ＿＿ some milk.", en: "to buy" },
+  { id: "term_fill_u3_ks_03", unit: "Unit 3 part 1 K.S.", ja: "アンナは父と泳ぐために海へ行きました。", question: "Anna went to the sea ＿＿ ＿＿ with her father.", en: "to swim" }
+].map(item => ({
+  ...item,
+  type: "fill_blank",
+  blankCount: item.en.trim().split(/\s+/).length,
+  answers: item.answers || [],
+  skipStats: true
+}));
+
+const GRADE2_TENSE_SCENARIOS = [
+  { id: "aya_make", subject: "Aya", base: "make", present: "makes", past: "made", ing: "making", bePresent: "is", bePast: "was", presentTail: "lunch every day.", pastTail: "lunch yesterday.", futureTail: "lunch tomorrow.", jaPresent: "アヤは毎日、昼食を作ります。", jaPast: "アヤは昨日、昼食を作りました。", jaFuture: "アヤは明日、昼食を作るでしょう。" },
+  { id: "takashi_leave", subject: "Takashi", base: "leave", present: "leaves", past: "left", ing: "leaving", bePresent: "is", bePast: "was", presentTail: "home at seven every morning.", pastTail: "home at seven yesterday.", futureTail: "home at seven tomorrow.", jaPresent: "孝は毎朝7時に家を出発します。", jaPast: "孝は昨日7時に家を出発しました。", jaFuture: "孝は明日7時に家を出発するでしょう。" },
+  { id: "ken_show", subject: "Ken", base: "show", present: "shows", past: "showed", ing: "showing", bePresent: "is", bePast: "was", presentTail: "us around the city on weekends.", pastTail: "us around the city last Sunday.", futureTail: "us around the city next Sunday.", jaPresent: "健は週末に私たちを町のあちこちへ案内します。", jaPast: "健はこの前の日曜日、私たちを町のあちこちへ案内しました。", jaFuture: "健は次の日曜日、私たちを町のあちこちへ案内するでしょう。" },
+  { id: "they_enjoy", subject: "They", base: "enjoy", present: "enjoy", past: "enjoyed", ing: "enjoying", bePresent: "are", bePast: "were", presentTail: "shopping after school.", pastTail: "shopping yesterday.", futureTail: "shopping tomorrow.", jaPresent: "彼らは放課後、買い物を楽しみます。", jaPast: "彼らは昨日、買い物を楽しみました。", jaFuture: "彼らは明日、買い物を楽しむでしょう。" },
+  { id: "mika_go", subject: "Mika", base: "go", present: "goes", past: "went", ing: "going", bePresent: "is", bePast: "was", presentTail: "to Nagoya every summer.", pastTail: "to Nagoya last summer.", futureTail: "to Nagoya next summer.", jaPresent: "ミカは毎年夏に名古屋へ行きます。", jaPast: "ミカは去年の夏、名古屋へ行きました。", jaFuture: "ミカは来年の夏、名古屋へ行くでしょう。" },
+  { id: "we_visit", subject: "We", base: "visit", present: "visit", past: "visited", ing: "visiting", bePresent: "are", bePast: "were", presentTail: "the museum every month.", pastTail: "the museum last month.", futureTail: "the museum next month.", jaPresent: "私たちは毎月その博物館を訪れます。", jaPast: "私たちは先月その博物館を訪れました。", jaFuture: "私たちは来月その博物館を訪れるでしょう。" },
+  { id: "risa_buy", subject: "Risa", base: "buy", present: "buys", past: "bought", ing: "buying", bePresent: "is", bePast: "was", presentTail: "milk at the supermarket.", pastTail: "milk at the supermarket yesterday.", futureTail: "milk at the supermarket tomorrow.", jaPresent: "リサはスーパーで牛乳を買います。", jaPast: "リサは昨日スーパーで牛乳を買いました。", jaFuture: "リサは明日スーパーで牛乳を買うでしょう。" },
+  { id: "anna_swim", subject: "Anna", base: "swim", present: "swims", past: "swam", ing: "swimming", bePresent: "is", bePast: "was", presentTail: "in the sea every summer.", pastTail: "in the sea last Sunday.", futureTail: "in the sea next Sunday.", jaPresent: "アンナは毎年夏に海で泳ぎます。", jaPast: "アンナはこの前の日曜日、海で泳ぎました。", jaFuture: "アンナは次の日曜日、海で泳ぐでしょう。" },
+  { id: "jun_do", subject: "Jun", base: "do", present: "does", past: "did", ing: "doing", bePresent: "is", bePast: "was", presentTail: "his homework in the library.", pastTail: "his homework in the library yesterday.", futureTail: "his homework in the library tomorrow.", jaPresent: "ジュンは図書館で宿題をします。", jaPast: "ジュンは昨日図書館で宿題をしました。", jaFuture: "ジュンは明日図書館で宿題をするでしょう。" },
+  { id: "jim_study", subject: "Jim", base: "study", present: "studies", past: "studied", ing: "studying", bePresent: "is", bePast: "was", presentTail: "Japanese history every day.", pastTail: "Japanese history yesterday.", futureTail: "Japanese history tomorrow.", jaPresent: "ジムは毎日日本史を勉強します。", jaPast: "ジムは昨日日本史を勉強しました。", jaFuture: "ジムは明日日本史を勉強するでしょう。" },
+  { id: "meg_play", subject: "Meg", base: "play", present: "plays", past: "played", ing: "playing", bePresent: "is", bePast: "was", presentTail: "soccer after school.", pastTail: "soccer after school yesterday.", futureTail: "soccer after school tomorrow.", jaPresent: "メグは放課後サッカーをします。", jaPast: "メグは昨日、放課後サッカーをしました。", jaFuture: "メグは明日、放課後サッカーをするでしょう。" },
+  { id: "she_name", subject: "She", base: "name", present: "names", past: "named", ing: "naming", bePresent: "is", bePast: "was", presentTail: "her cats after actors.", pastTail: "the cat Taka after an actor.", futureTail: "her new cat after an actor.", jaPresent: "彼女は俳優にちなんでネコに名前をつけます。", jaPast: "彼女は俳優にちなんでそのネコをタカと名づけました。", jaFuture: "彼女は俳優にちなんで新しいネコに名前をつけるでしょう。" },
+  { id: "kumi_make", subject: "Kumi", base: "make", present: "makes", past: "made", ing: "making", bePresent: "is", bePast: "was", presentTail: "monjayaki at home.", pastTail: "monjayaki at home yesterday.", futureTail: "monjayaki at home tomorrow.", jaPresent: "久美は家でもんじゃ焼きを作ります。", jaPast: "久美は昨日、家でもんじゃ焼きを作りました。", jaFuture: "久美は明日、家でもんじゃ焼きを作るでしょう。" },
+  { id: "he_use", subject: "He", base: "use", present: "uses", past: "used", ing: "using", bePresent: "is", bePast: "was", presentTail: "a computer to learn English.", pastTail: "a computer to learn English yesterday.", futureTail: "a computer to learn English tomorrow.", jaPresent: "彼は英語を学ぶためにコンピューターを使います。", jaPast: "彼は昨日、英語を学ぶためにコンピューターを使いました。", jaFuture: "彼は明日、英語を学ぶためにコンピューターを使うでしょう。" },
+  { id: "taro_come", subject: "Taro", base: "come", present: "comes", past: "came", ing: "coming", bePresent: "is", bePast: "was", presentTail: "here to run every morning.", pastTail: "here to run yesterday.", futureTail: "here to run tomorrow.", jaPresent: "太郎は毎朝走るためにここへ来ます。", jaPast: "太郎は昨日、走るためにここへ来ました。", jaFuture: "太郎は明日、走るためにここへ来るでしょう。" },
+  { id: "father_call", subject: "My father", base: "call", present: "calls", past: "called", ing: "calling", bePresent: "is", bePast: "was", presentTail: "me Nao.", pastTail: "me Nao yesterday.", futureTail: "me Nao tomorrow.", jaPresent: "父は私をナオと呼びます。", jaPast: "父は昨日、私をナオと呼びました。", jaFuture: "父は明日、私をナオと呼ぶでしょう。" },
+  { id: "they_find", subject: "They", base: "find", present: "find", past: "found", ing: "finding", bePresent: "are", bePast: "were", presentTail: "interesting paintings in the area.", pastTail: "an interesting painting yesterday.", futureTail: "more paintings tomorrow.", jaPresent: "彼らはその地域でおもしろい絵を見つけます。", jaPast: "彼らは昨日おもしろい絵を見つけました。", jaFuture: "彼らは明日さらに多くの絵を見つけるでしょう。" },
+  { id: "chef_create", subject: "The chef", base: "create", present: "creates", past: "created", ing: "creating", bePresent: "is", bePast: "was", presentTail: "new flavors every year.", pastTail: "a new flavor last year.", futureTail: "a new flavor next year.", jaPresent: "そのシェフは毎年新しい味を作り出します。", jaPast: "そのシェフは去年、新しい味を作り出しました。", jaFuture: "そのシェフは来年、新しい味を作り出すでしょう。" },
+  { id: "traveler_order", subject: "The traveler", base: "order", present: "orders", past: "ordered", ing: "ordering", bePresent: "is", bePast: "was", presentTail: "ramen at this restaurant.", pastTail: "ramen at this restaurant yesterday.", futureTail: "ramen at this restaurant tomorrow.", jaPresent: "その旅行者はこのレストランでラーメンを注文します。", jaPast: "その旅行者は昨日このレストランでラーメンを注文しました。", jaFuture: "その旅行者は明日このレストランでラーメンを注文するでしょう。" },
+  { id: "they_communicate", subject: "They", base: "communicate", present: "communicate", past: "communicated", ing: "communicating", bePresent: "are", bePast: "were", presentTail: "with visitors in English.", pastTail: "with visitors in English yesterday.", futureTail: "with visitors in English tomorrow.", jaPresent: "彼らは訪問者と英語で意思の疎通をします。", jaPast: "彼らは昨日、訪問者と英語で意思の疎通をしました。", jaFuture: "彼らは明日、訪問者と英語で意思の疎通をするでしょう。" }
+];
+
+function getOneWordTenseChoices(scenario, correct) {
+  const candidates = [
+    correct,
+    scenario.present,
+    scenario.past,
+    scenario.base,
+    scenario.ing,
+    `${scenario.base}s`
+  ];
+  return [...new Set(candidates)].slice(0, 4);
+}
+
+function getFutureTenseChoices(scenario) {
+  const candidates = [
+    `will ${scenario.base}`,
+    `will ${scenario.present}`,
+    `will ${scenario.past}`,
+    `will ${scenario.ing}`,
+    `will ${scenario.base}s`
+  ];
+  return [...new Set(candidates)].slice(0, 4);
+}
+
+const GRADE2_TERM_TENSE_ITEMS = GRADE2_TENSE_SCENARIOS.flatMap(scenario => [
+  {
+    id: `term_tense_${scenario.id}_present`,
+    ja: scenario.jaPresent,
+    question: `${scenario.subject} ＿＿ ${scenario.presentTail}`,
+    en: scenario.present,
+    sentence: `${scenario.subject} ${scenario.present} ${scenario.presentTail}`,
+    choices: getOneWordTenseChoices(scenario, scenario.present)
+  },
+  {
+    id: `term_tense_${scenario.id}_past`,
+    ja: scenario.jaPast,
+    question: `${scenario.subject} ＿＿ ${scenario.pastTail}`,
+    en: scenario.past,
+    sentence: `${scenario.subject} ${scenario.past} ${scenario.pastTail}`,
+    choices: getOneWordTenseChoices(scenario, scenario.past)
+  },
+  {
+    id: `term_tense_${scenario.id}_future`,
+    ja: scenario.jaFuture,
+    question: `${scenario.subject} ＿＿ ${scenario.futureTail}`,
+    en: `will ${scenario.base}`,
+    sentence: `${scenario.subject} will ${scenario.base} ${scenario.futureTail}`,
+    choices: getFutureTenseChoices(scenario)
+  }
+]).map(item => ({
+  ...item,
+  type: "fill_blank",
+  blankCount: 1,
+  answers: [],
+  skipStats: true
+}));
+
+const CONJUNCTION_CHOICES = ["when", "if", "because", "that"];
+const GRADE2_TERM_CONJUNCTION_ITEMS = [
+  { id: "term_conj_01", ja: "もし明日ここに来るなら、一緒にバスケットボールをしましょう。", question: "＿＿ you come here tomorrow, let's play basketball together.", en: "if" },
+  { id: "term_conj_02", ja: "多くの人が祭りに行くと思います。", question: "I think ＿＿ a lot of people will go to the festival.", en: "that" },
+  { id: "term_conj_03", ja: "この筆箱はかわいいので買いたいです。", question: "I want to buy this pencil case ＿＿ it's cute.", en: "because" },
+  { id: "term_conj_04", ja: "マイは時間があるときにピアノを練習します。", question: "Mai practices the piano ＿＿ she has free time.", en: "when" },
+  { id: "term_conj_05", ja: "もし土曜日が晴れなら、健二は海に行くつもりです。", question: "Kenji will go to the sea ＿＿ it is sunny on Saturday.", en: "if" },
+  { id: "term_conj_06", ja: "私はこれはいい考えだと思います。", question: "I think ＿＿ this is a good idea.", en: "that" },
+  { id: "term_conj_07", ja: "理絵は学校に来たとき、疲れているように見えました。", question: "＿＿ Rie came to school, she looked tired.", en: "when" },
+  { id: "term_conj_08", ja: "博はみんなに親切なので、私は彼が好きです。", question: "I like Hiroshi ＿＿ he is kind to everyone.", en: "because" },
+  { id: "term_conj_09", ja: "あなたは彼女がダンスが得意なことを知っていますか。", question: "Do you know ＿＿ she is good at dancing?", en: "that" },
+  { id: "term_conj_10", ja: "この前の日曜日に動物園へ行ったので、今週末は行きません。", question: "I'm not going to the zoo this weekend ＿＿ I went there last Sunday.", en: "because" },
+  { id: "term_conj_11", ja: "もんじゃ焼きを作るとき、私はわくわくします。", question: "＿＿ I make monjayaki, I feel excited.", en: "when" },
+  { id: "term_conj_12", ja: "あなたが気に入ってくれることを願っています。", question: "I hope ＿＿ you will like it.", en: "that" },
+  { id: "term_conj_13", ja: "もし日本史に興味があるなら、この本を読んでください。", question: "＿＿ you are interested in Japanese history, read this book.", en: "if" },
+  { id: "term_conj_14", ja: "スープが濃いので、私は札幌ラーメンが好きです。", question: "I like Sapporo ramen ＿＿ the soup is thick.", en: "because" },
+  { id: "term_conj_15", ja: "健が空港に到着したとき、私たちはわくわくしました。", question: "＿＿ Ken arrived at the airport, we were excited.", en: "when" },
+  { id: "term_conj_16", ja: "食べ物は世界中を旅すると思います。", question: "I think ＿＿ food travels around the world.", en: "that" },
+  { id: "term_conj_17", ja: "もし予約があるなら、すぐに席に着けます。", question: "＿＿ she has a reservation, she can get a table soon.", en: "if" },
+  { id: "term_conj_18", ja: "彼はおもしろい絵を見つけたので驚きました。", question: "He was surprised ＿＿ he found an interesting painting.", en: "because" },
+  { id: "term_conj_19", ja: "彼らは買い物に行くとき、英語で話します。", question: "＿＿ they go shopping, they communicate in English.", en: "when" },
+  { id: "term_conj_20", ja: "もし気候が変化すれば、私たちの生活も変わるでしょう。", question: "＿＿ the climate changes, our lives will change too.", en: "if" }
+].map(item => ({
+  ...item,
+  type: "fill_blank",
+  blankCount: 1,
+  choices: CONJUNCTION_CHOICES,
+  answers: [],
+  skipStats: true
+}));
+
+const GRADE2_TERM_REORDER_ITEMS = GRADE2_TERM_TENSE_ITEMS.map(item => {
+  const words = item.sentence.trim().split(/\s+/);
+  return {
+    id: item.id.replace("term_tense_", "term_reorder_"),
+    type: "reorder_pair",
+    ja: item.ja,
+    en: `${words[1]}|||${words[3]}`,
+    fullSentence: item.sentence,
+    skipStats: true
+  };
+});
 
 const quests = [
   {
@@ -279,6 +557,90 @@ const quests = [
     mode: "final",
     unit: "Unit3",
     wordType: "word"
+  },
+  {
+    id: "grade2_term_test_ja_choice",
+    title: "単語チェック　和訳（4択・全65語）",
+    boss: "和訳テストドラゴン",
+    bossLife: 20,
+    playerLife: 10,
+    enemyImg: "images/enemies/ghost_master.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "grade2_term_test_ja_choice",
+    unit: "中学校2年生定期テスト",
+    wordType: "term_test"
+  },
+  {
+    id: "grade2_term_test_words",
+    title: "単語チェック　英訳（全65語）",
+    boss: "定期テストドラゴン",
+    bossLife: 20,
+    playerLife: 10,
+    enemyImg: "images/enemies/ghost_master.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "grade2_term_test_words",
+    unit: "中学校2年生定期テスト",
+    wordType: "term_test"
+  },
+  {
+    id: "grade2_term_fill_choice",
+    title: "空所補充（選択式）",
+    boss: "選択問題ドラゴン",
+    bossLife: 20,
+    playerLife: 10,
+    enemyImg: "images/enemies/ghost_master.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "grade2_term_fill_choice",
+    unit: "中学校2年生定期テスト",
+    wordType: "fill_test"
+  },
+  {
+    id: "grade2_term_fill_written",
+    title: "空所補充（記述式）",
+    boss: "記述問題ドラゴン",
+    bossLife: 20,
+    playerLife: 10,
+    enemyImg: "images/enemies/ghost_master.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "grade2_term_fill_written",
+    unit: "中学校2年生定期テスト",
+    wordType: "fill_test"
+  },
+  {
+    id: "grade2_term_tense_choice",
+    title: "時制復習（選択式・全60問）",
+    boss: "時制ドラゴン",
+    bossLife: 20,
+    playerLife: 10,
+    enemyImg: "images/enemies/ghost_master.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "grade2_term_tense_choice",
+    unit: "中学校2年生定期テスト",
+    wordType: "tense_test"
+  },
+  {
+    id: "grade2_term_conjunction_choice",
+    title: "接続詞（選択式・全20問）",
+    boss: "接続詞ドラゴン",
+    bossLife: 20,
+    playerLife: 10,
+    enemyImg: "images/enemies/ghost_master.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "grade2_term_conjunction_choice",
+    unit: "中学校2年生定期テスト",
+    wordType: "conjunction_test"
+  },
+  {
+    id: "grade2_term_reorder_choice",
+    title: "並び替え（2番目・4番目・全60問）",
+    boss: "並び替えドラゴン",
+    bossLife: 20,
+    playerLife: 10,
+    enemyImg: "images/enemies/ghost_master.png",
+    backgroundImg: "images/backgrounds/dungeon_unit2.png",
+    mode: "grade2_term_reorder_choice",
+    unit: "中学校2年生定期テスト",
+    wordType: "reorder_test"
   }
 
 
@@ -872,7 +1234,11 @@ function loadSave() {
       playerLife: Number.isFinite(loaded.playerLife) ? loaded.playerLife : (loaded.hp ? Math.ceil(loaded.hp / 34) : PLAYER_MAX_LIFE),
       learned: loaded.learned || {},
       mastered: loaded.mastered || {},
-      clearedQuests: loaded.clearedQuests || {}
+      clearedQuests: loaded.clearedQuests || {},
+      termTestProgress: {
+        wordTranslation: loaded.termTestProgress?.wordTranslation || {},
+        fillWritten: loaded.termTestProgress?.fillWritten || {}
+      }
     };
   } catch (e) {
     console.warn("セーブデータを読み込めませんでした", e);
@@ -884,6 +1250,12 @@ function saveGame() {
 }
 
 async function loadWords() {
+  if (Array.isArray(window.MUGI_WORDS) && Array.isArray(window.MUGI_PHRASES)) {
+    state.words = window.MUGI_WORDS;
+    state.phrases = window.MUGI_PHRASES;
+    return;
+  }
+
   const [wordRes, phraseRes] = await Promise.all([fetch("words.json"), fetch("phrases.json")]);
   if (!wordRes.ok) throw new Error("words.jsonを読み込めませんでした");
   if (!phraseRes.ok) throw new Error("phrases.jsonを読み込めませんでした");
@@ -893,6 +1265,36 @@ async function loadWords() {
 
 function shuffle(array) {
   return [...array].sort(() => Math.random() - 0.5);
+}
+
+function getReviewDelay(streak) {
+  const days = [0, 1, 3, 7, 14, 30, 60];
+  return days[Math.min(Math.max(streak, 1), days.length - 1)] * DAY_MS;
+}
+
+function isReviewDue(itemId, now = Date.now()) {
+  const stats = getWordStats(itemId);
+  return stats.attempts > 0 && (!stats.nextReviewAt || stats.nextReviewAt <= now);
+}
+
+function getStudyPriority(item, now = Date.now()) {
+  const stats = getWordStats(item.id);
+  if (stats.attempts === 0) return 600 + Math.random() * 30;
+
+  const rate = stats.attempts > 0 ? stats.correct / stats.attempts : 0;
+  const overdueDays = stats.nextReviewAt ? Math.max(0, now - stats.nextReviewAt) / DAY_MS : 1;
+  const dueScore = isReviewDue(item.id, now) ? 1000 + Math.min(overdueDays, 30) * 10 : 0;
+  const weakScore = stats.wrong * 45 + (1 - rate) * 250;
+  return dueScore + weakScore - stats.streak * 12 + Math.random() * 20;
+}
+
+function selectBattleItems(items, limit) {
+  const now = Date.now();
+  return items
+    .map(item => ({ item, priority: getStudyPriority(item, now) }))
+    .sort((a, b) => b.priority - a.priority)
+    .slice(0, Math.min(limit, items.length))
+    .map(entry => entry.item);
 }
 
 function normalizeAnswer(value) {
@@ -924,7 +1326,10 @@ function getWordStats(wordId) {
   const correct = Number(raw.correct ?? raw.count ?? 0);
   const wrong = Number(raw.wrong ?? 0);
   const attempts = Number(raw.attempts ?? (correct + wrong));
-  return { correct, wrong, attempts };
+  const streak = Number(raw.streak ?? 0);
+  const lastReviewedAt = Number(raw.lastReviewedAt ?? 0);
+  const nextReviewAt = Number(raw.nextReviewAt ?? 0);
+  return { correct, wrong, attempts, streak, lastReviewedAt, nextReviewAt };
 }
 
 function saveWordStats(wordId, stats) {
@@ -1096,7 +1501,7 @@ function updateStatus() {
 
   if ($("playerStageLife")) {
     const playerLifeEl = $("playerStageLife");
-    const isTwoRowLife = state.currentQuest?.mode === "unit2_test_prep";
+    const isTwoRowLife = (state.playerMaxLife || PLAYER_MAX_LIFE) > 5;
     playerLifeEl.classList.toggle("player-life-two-rows", isTwoRowLife);
     playerLifeEl.innerHTML = playerStageHeartsHtml(
       state.save.playerLife,
@@ -1185,8 +1590,9 @@ function renderUnitSummary() {
       const stats = getWordStats(word.id);
       if (stats.correct > 0) acc.learned += 1;
       if (isWordMastered(word.id)) acc.mastered += 1;
+      if (isReviewDue(word.id)) acc.due += 1;
       return acc;
-    }, { learned: 0, mastered: 0 });
+    }, { learned: 0, mastered: 0, due: 0 });
 
     const row = document.createElement("div");
     row.className = "unit-summary-row";
@@ -1201,10 +1607,36 @@ function renderUnitSummary() {
           <span>完全習得数</span>
           <strong>${totals.mastered}/${total}</strong>
         </div>
+        <div class="unit-metric due">
+          <span>今日の復習</span>
+          <strong>${totals.due}語</strong>
+        </div>
       </div>
     `;
     list.appendChild(row);
   });
+
+  if (!isGrade1) {
+    const progress = state.save.termTestProgress || {};
+    const wordTranslationCount = Object.values(progress.wordTranslation || {}).filter(Boolean).length;
+    const fillWrittenCount = Object.values(progress.fillWritten || {}).filter(Boolean).length;
+    const row = document.createElement("div");
+    row.className = "unit-summary-row term-test-summary-row";
+    row.innerHTML = `
+      <div class="unit-name">中学校2年生定期テスト</div>
+      <div class="unit-metrics-box term-test-metrics-box">
+        <div class="unit-metric">
+          <span>単語英訳</span>
+          <strong>${Math.min(wordTranslationCount, 65)}/65</strong>
+        </div>
+        <div class="unit-metric master">
+          <span>空所補充記述</span>
+          <strong>${Math.min(fillWrittenCount, 51)}/51</strong>
+        </div>
+      </div>
+    `;
+    list.appendChild(row);
+  }
 }
 
 function getWordBookWordsByFilter() {
@@ -1562,7 +1994,25 @@ function renderQuests() {
 
 function getQuestWords(quest, forBattle = true) {
   let filtered;
-  if (quest.mode === "unit2_long_writing") {
+  if (["grade2_term_fill_choice", "grade2_term_fill_written"].includes(quest.mode)) {
+    filtered = GRADE2_TERM_FILL_ITEMS;
+  } else if (quest.mode === "grade2_term_tense_choice") {
+    filtered = GRADE2_TERM_TENSE_ITEMS;
+  } else if (quest.mode === "grade2_term_conjunction_choice") {
+    filtered = GRADE2_TERM_CONJUNCTION_ITEMS;
+  } else if (quest.mode === "grade2_term_reorder_choice") {
+    filtered = GRADE2_TERM_REORDER_ITEMS;
+  } else if (["grade2_term_test_words", "grade2_term_test_ja_choice"].includes(quest.mode)) {
+    filtered = GRADE2_TERM_TEST_WORD_SPECS.map(spec => {
+      const source = state.words.find(word => word.id === spec.id);
+      if (!source && !spec.en) return null;
+      return {
+        ...(source || {}),
+        ...spec,
+        type: "word"
+      };
+    }).filter(Boolean);
+  } else if (quest.mode === "unit2_long_writing") {
     filtered = [
       {
         id: "unit2_long_01",
@@ -1619,13 +2069,24 @@ function getQuestWords(quest, forBattle = true) {
     filtered = state.words.filter(w => w.unit === quest.unit && w.area === quest.area);
   }
 
-  if (quest.wordType && !["phrase", "mixed_test", "long_writing"].includes(quest.wordType)) {
+  if (quest.wordType && !["phrase", "mixed_test", "long_writing", "term_test", "fill_test", "tense_test", "conjunction_test", "reorder_test"].includes(quest.wordType)) {
     filtered = filtered.filter(w => (w.type || "word") === quest.wordType);
   }
 
   if (!forBattle) return filtered;
   const limit = quest.bossLife;
-  return shuffle(filtered).slice(0, Math.min(limit, filtered.length));
+  const progressKey = quest.mode === "grade2_term_test_words"
+    ? "wordTranslation"
+    : quest.mode === "grade2_term_fill_written"
+      ? "fillWritten"
+      : null;
+  if (progressKey) {
+    const completed = state.save.termTestProgress?.[progressKey] || {};
+    const incompleteItems = shuffle(filtered.filter(item => !completed[item.id]));
+    const completedItems = shuffle(filtered.filter(item => completed[item.id]));
+    return [...incompleteItems, ...completedItems].slice(0, Math.min(limit, filtered.length));
+  }
+  return selectBattleItems(filtered, limit);
 }
 
 function applyQuestBackground(quest) {
@@ -1718,6 +2179,104 @@ function startQuest(questId) {
   renderQuestion();
 }
 
+function isJapaneseChoiceQuest() {
+  return state.currentQuest?.mode === "grade2_term_test_ja_choice";
+}
+
+function isFillChoiceQuest() {
+  return [
+    "grade2_term_fill_choice",
+    "grade2_term_tense_choice",
+    "grade2_term_conjunction_choice"
+  ].includes(state.currentQuest?.mode);
+}
+
+function isTenseChoiceQuest() {
+  return state.currentQuest?.mode === "grade2_term_tense_choice";
+}
+
+function isReorderChoiceQuest() {
+  return state.currentQuest?.mode === "grade2_term_reorder_choice";
+}
+
+function isChoiceQuest() {
+  return isJapaneseChoiceQuest() || isFillChoiceQuest() || isReorderChoiceQuest();
+}
+
+function isFillBlankItem(item) {
+  return item?.type === "fill_blank";
+}
+
+function isReorderItem(item) {
+  return item?.type === "reorder_pair";
+}
+
+function renderChoiceButtons(options, word, formatLabel = value => value) {
+  const choiceList = $("choiceList");
+  if (!choiceList) return;
+  choiceList.innerHTML = "";
+
+  options.forEach((option, index) => {
+    const value = typeof option === "string" ? option : option.value;
+    const labelText = typeof option === "string" ? formatLabel(option) : option.label;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "choice-btn";
+    button.dataset.answer = normalizeAnswer(value);
+    const mark = document.createElement("span");
+    mark.className = "choice-mark";
+    mark.textContent = String(index + 1);
+    const label = document.createElement("span");
+    label.textContent = labelText;
+    button.append(mark, label);
+    button.addEventListener("click", () => answer(normalizeAnswer(value), word));
+    choiceList.appendChild(button);
+  });
+}
+
+function renderJapaneseChoices(word) {
+  const pool = getQuestWords(state.currentQuest, false)
+    .filter(item => item.id !== word.id && item.ja !== word.ja);
+  const options = shuffle([word, ...shuffle(pool).slice(0, 3)])
+    .map(item => ({ value: item.ja, label: item.ja }));
+  renderChoiceButtons(options, word);
+}
+
+function renderFillChoices(word) {
+  let choices = Array.isArray(word.choices) ? [...word.choices] : [];
+  if (!choices.length) {
+    const pool = GRADE2_TERM_FILL_ITEMS
+      .filter(item => item.id !== word.id && item.blankCount === word.blankCount && normalizeAnswer(item.en) !== normalizeAnswer(word.en))
+      .map(item => item.en);
+    choices = [word.en, ...shuffle([...new Set(pool)]).slice(0, 3)];
+  }
+  if (!choices.some(choice => normalizeAnswer(choice) === normalizeAnswer(word.en))) choices.push(word.en);
+  choices = shuffle([...new Set(choices)]).slice(0, 4);
+  renderChoiceButtons(choices, word, value => word.blankCount > 1 ? value.split(/\s+/).join(" / ") : value);
+}
+
+function renderReorderChoices(word) {
+  const words = word.fullSentence.trim().split(/\s+/);
+  const correctValue = normalizeAnswer(word.en);
+  const candidates = [];
+  words.forEach(second => {
+    words.forEach(fourth => {
+      const value = `${second}|||${fourth}`;
+      if (normalizeAnswer(value) !== correctValue) {
+        candidates.push({ value, label: `2番目：${second}　／　4番目：${fourth}` });
+      }
+    });
+  });
+  const uniqueCandidates = [...new Map(candidates.map(option => [normalizeAnswer(option.value), option])).values()];
+  const [correctSecond, correctFourth] = word.en.split("|||");
+  const correctOption = {
+    value: word.en,
+    label: `2番目：${correctSecond}　／　4番目：${correctFourth}`
+  };
+  renderChoiceButtons(shuffle([correctOption, ...shuffle(uniqueCandidates).slice(0, 3)]), word);
+  return shuffle(words).join(" / ");
+}
+
 function renderQuestion() {
   if (state.enemyLife <= 0) return finishQuest(true);
   if (state.save.playerLife <= 0) return finishQuest(false);
@@ -1735,13 +2294,46 @@ function renderQuestion() {
   if ($("progressText")) $("progressText").textContent = `${state.questionCount}問目`;
   if ($("progressInline")) $("progressInline").textContent = `${state.questionCount}問目`;
   updateEnemyLifeBar();
-  $("jaText").textContent = state.currentWord.ja;
+  const japaneseChoiceMode = isJapaneseChoiceQuest();
+  const fillChoiceMode = isFillChoiceQuest();
+  const reorderChoiceMode = isReorderChoiceQuest();
+  const choiceMode = isChoiceQuest();
+  const fillBlankMode = isFillBlankItem(state.currentWord);
+  const reorderMode = isReorderItem(state.currentWord);
+  $("jaText").textContent = japaneseChoiceMode ? state.currentWord.en : state.currentWord.ja;
   const phraseMode = isPhraseItem(state.currentWord);
   const longWritingMode = state.currentWord.type === "long_sentence";
   const phraseSentence = $("phraseSentence");
   const questionSmall = document.querySelector(".question-box .question-small");
+  $("answerForm").classList.toggle("hidden", choiceMode);
+  $("choiceList").classList.toggle("hidden", !choiceMode);
+  $("choiceList").innerHTML = "";
   $("answerInput").classList.toggle("long-writing-input", longWritingMode);
-  if (longWritingMode) {
+  if (japaneseChoiceMode) {
+    if (questionSmall) questionSmall.innerHTML = `<span id="progressInline">${state.questionCount}問目</span>　この英語の意味はどれ？`;
+    phraseSentence.classList.add("hidden");
+    phraseSentence.innerHTML = "";
+    $("hintText").textContent = "正しい日本語を4つの中から選ぼう。";
+    renderJapaneseChoices(state.currentWord);
+  } else if (reorderChoiceMode) {
+    if (questionSmall) questionSmall.innerHTML = `<span id="progressInline">${state.questionCount}問目</span>　並び替えたときの2番目と4番目を選ぼう！`;
+    phraseSentence.textContent = `語句：${renderReorderChoices(state.currentWord)}`;
+    phraseSentence.classList.remove("hidden");
+    $("hintText").textContent = "日本語に合う英文を作り、2番目と4番目の語の組み合わせを選ぼう。";
+  } else if (fillChoiceMode) {
+    if (questionSmall) questionSmall.innerHTML = `<span id="progressInline">${state.questionCount}問目</span>　空所に入る語を選ぼう！`;
+    phraseSentence.textContent = state.currentWord.question;
+    phraseSentence.classList.remove("hidden");
+    $("hintText").textContent = isTenseChoiceQuest()
+      ? "時を表す語句に注目して、正しい動詞の形を選ぼう。"
+      : `空所は${state.currentWord.blankCount}語です。選択肢の「／」は空所の区切りです。`;
+    renderFillChoices(state.currentWord);
+  } else if (fillBlankMode) {
+    if (questionSmall) questionSmall.innerHTML = `<span id="progressInline">${state.questionCount}問目</span>　空所の語を順番に入力しよう！`;
+    phraseSentence.textContent = state.currentWord.question;
+    phraseSentence.classList.remove("hidden");
+    $("hintText").textContent = `空所は${state.currentWord.blankCount}語です。半角スペースで区切って入力しよう。`;
+  } else if (longWritingMode) {
     if (questionSmall) questionSmall.innerHTML = `<span id="progressInline">${state.questionCount}問目</span>　日本語を英文にしよう！`;
     phraseSentence.classList.add("hidden");
     phraseSentence.innerHTML = "";
@@ -1759,8 +2351,9 @@ function renderQuestion() {
     $("hintText").textContent = "ヒントボタンで読み方を表示できます。";
   }
   if ($("hintBtn")) $("hintBtn").disabled = false;
+  if ($("speakBtn")) $("speakBtn").disabled = fillBlankMode || reorderMode || !("speechSynthesis" in window);
 
-  if (!window.matchMedia("(max-width: 560px)").matches) {
+  if (!choiceMode && !window.matchMedia("(max-width: 560px)").matches) {
     setTimeout(() => $("answerInput").focus(), 50);
   }
 }
@@ -1822,17 +2415,59 @@ function submitAnswer(event) {
   answer(userAnswer, state.currentWord);
 }
 
+function getEditDistance(a, b) {
+  const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i += 1) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j += 1) {
+      current[j] = Math.min(
+        current[j - 1] + 1,
+        previous[j] + 1,
+        previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+  return previous[b.length];
+}
+
+function isNearMiss(userAnswer, acceptedAnswers) {
+  return acceptedAnswers.some(candidate => {
+    if (candidate.length < 4 || userAnswer.length < 4) return false;
+    const allowance = Math.min(2, Math.max(1, Math.floor(candidate.length * 0.12)));
+    return getEditDistance(userAnswer, candidate) <= allowance;
+  });
+}
+
 function answer(userAnswer, word) {
   if (state.answered) return;
   state.answered = true;
 
-  const acceptedAnswers = getAcceptedAnswers(word);
+  const japaneseChoiceMode = isJapaneseChoiceQuest();
+  const choiceMode = isChoiceQuest();
+  const fillBlankMode = isFillBlankItem(word);
+  const reorderMode = isReorderItem(word);
+  const acceptedAnswers = japaneseChoiceMode ? [normalizeAnswer(word.ja)] : getAcceptedAnswers(word);
   const isCorrect = acceptedAnswers.includes(userAnswer);
-  const correctAnswer = getPrimaryAnswer(word);
+  const nearMiss = !choiceMode && !isCorrect && isNearMiss(userAnswer, acceptedAnswers);
+  const correctAnswer = japaneseChoiceMode ? word.ja : getPrimaryAnswer(word);
+  const displayAnswer = reorderMode
+    ? (() => {
+        const [second, fourth] = correctAnswer.split("|||");
+        return `2番目：${second} ／ 4番目：${fourth}`;
+      })()
+    : fillBlankMode
+      ? correctAnswer.split(/\s+/).join(" / ")
+      : correctAnswer;
 
   $("answerInput").disabled = true;
   $("answerBtn").disabled = true;
   if ($("hintBtn")) $("hintBtn").disabled = true;
+  document.querySelectorAll("#choiceList .choice-btn").forEach(button => {
+    button.disabled = true;
+    if (button.dataset.answer === normalizeAnswer(correctAnswer)) button.classList.add("correct");
+    if (!isCorrect && button.dataset.answer === userAnswer) button.classList.add("wrong");
+  });
 
   if (isCorrect) {
     $("answerInput").classList.add("correct");
@@ -1840,12 +2475,25 @@ function answer(userAnswer, word) {
     state.gainExp += 10;
     state.enemyLife = Math.max(0, state.enemyLife - 1);
     state.battleDeck.shift();
+    registerTermTestCompletion(word);
     if (!word.skipStats) registerCorrect(word);
     showPencilAttack();
     showDamage("やるな！", "enemy");
-    addBattleLog(`正解！ ${isPhraseItem(word) ? correctAnswer : word.en}で攻撃。${state.currentQuest.boss}のライフ ${state.enemyLife}/${state.enemyMaxLife}`, "good");
+    addBattleLog(japaneseChoiceMode
+      ? `正解！ ${word.en} は「${word.ja}」。${state.currentQuest.boss}のライフ ${state.enemyLife}/${state.enemyMaxLife}`
+      : reorderMode
+      ? `正解！ ${displayAnswer}。${state.currentQuest.boss}のライフ ${state.enemyLife}/${state.enemyMaxLife}`
+      : fillBlankMode
+      ? `正解！ 空所は「${displayAnswer}」。${state.currentQuest.boss}のライフ ${state.enemyLife}/${state.enemyMaxLife}`
+      : `正解！ ${isPhraseItem(word) ? correctAnswer : word.en}で攻撃。${state.currentQuest.boss}のライフ ${state.enemyLife}/${state.enemyMaxLife}`, "good");
     $("resultTitle").textContent = "正解！";
-    $("resultDetail").textContent = word.type === "long_sentence"
+    $("resultDetail").textContent = japaneseChoiceMode
+      ? `${word.en} の意味は「${word.ja}」。読み方：${word.pron || "確認中"}。正答率：${getMasterRateText(word.id)}。`
+      : reorderMode
+      ? `正しい英文：${word.fullSentence}　${displayAnswer}`
+      : fillBlankMode
+      ? `${word.question}　正解：${displayAnswer}`
+      : word.type === "long_sentence"
       ? `答えは「${(word.displayAnswers || [correctAnswer]).join('」または「')}」`
       : isPhraseItem(word)
         ? `正解：${correctAnswer}。熟語：${word.phrase}（${word.meaning || word.ja}）。`
@@ -1853,18 +2501,36 @@ function answer(userAnswer, word) {
   } else {
     $("answerInput").classList.add("wrong");
     state.save.playerLife = Math.max(0, state.save.playerLife - 1);
-    // 間違えた問題は正解するまで、すぐに同じ問題を出す
+    // 答えを見た直後の暗記にならないよう、数問後にもう一度出す。
+    state.battleDeck.shift();
+    state.battleDeck.splice(Math.min(RETRY_GAP, state.battleDeck.length), 0, word);
     if (!word.skipStats) registerWrong(word);
     showEnemyAttack();
     showDamage("油断したな！", "enemy", "player");
-    addBattleLog(`ミス… 正解は ${correctAnswer}。同じ問題にもう一度挑戦！ ムギのライフ ${state.save.playerLife}/${state.playerMaxLife || PLAYER_MAX_LIFE}`, "bad");
-    $("resultTitle").textContent = "Miss!";
-    $("resultDetail").textContent = isPhraseItem(word)
-      ? `入力：${userAnswer} / 正解：${correctAnswer}。熟語：${word.phrase}（${word.meaning || word.ja}）。`
-      : `入力：${userAnswer} / 正解：${correctAnswer}。「${word.ja}」は ${correctAnswer}。読み方：${word.pron || "確認中"}。`;
+    addBattleLog(japaneseChoiceMode
+      ? `ミス… ${word.en} の意味は「${word.ja}」。少し後でもう一度出題します。ムギのライフ ${state.save.playerLife}/${state.playerMaxLife || PLAYER_MAX_LIFE}`
+      : reorderMode
+      ? `ミス… 正しい組み合わせは「${displayAnswer}」。少し後でもう一度出題します。ムギのライフ ${state.save.playerLife}/${state.playerMaxLife || PLAYER_MAX_LIFE}`
+      : fillBlankMode
+      ? `ミス… 空所の正解は「${displayAnswer}」。少し後でもう一度出題します。ムギのライフ ${state.save.playerLife}/${state.playerMaxLife || PLAYER_MAX_LIFE}`
+      : `${nearMiss ? "あと少し！" : "ミス…"} 正解は ${correctAnswer}。少し後でもう一度出題します。ムギのライフ ${state.save.playerLife}/${state.playerMaxLife || PLAYER_MAX_LIFE}`, "bad");
+    $("resultTitle").textContent = nearMiss ? "つづりがあと少し！" : "Miss!";
+    $("resultDetail").textContent = japaneseChoiceMode
+      ? `選んだ意味：${userAnswer} / 正解：${word.ja}。${word.en}（${word.pron || "読み方確認中"}）`
+      : reorderMode
+      ? `正しい英文：${word.fullSentence}　正解：${displayAnswer}`
+      : fillBlankMode
+      ? `入力：${userAnswer} / 正解：${displayAnswer}。${word.question}`
+      : isPhraseItem(word)
+      ? `入力：${userAnswer} / 正解：${correctAnswer}。熟語：${word.phrase}（${word.meaning || word.ja}）。${nearMiss ? "文字の順番をよく見てみよう。" : ""}`
+      : `入力：${userAnswer} / 正解：${correctAnswer}。「${word.ja}」は ${correctAnswer}。読み方：${word.pron || "確認中"}。${nearMiss ? "文字の抜けや順番を確認しよう。" : ""}`;
   }
 
-  $("hintText").textContent = `答え：${correctAnswer}`;
+  $("hintText").textContent = japaneseChoiceMode
+    ? `意味：${word.ja}`
+    : reorderMode
+      ? `正しい英文：${word.fullSentence}`
+      : `答え：${displayAnswer}`;
   updateEnemyLifeBar();
   $("resultBox").classList.remove("hidden");
   updateStatus();
@@ -1874,14 +2540,43 @@ function answer(userAnswer, word) {
 
 function registerCorrect(word) {
   const before = getWordStats(word.id);
-  const stats = { correct: before.correct + 1, wrong: before.wrong, attempts: before.attempts + 1 };
+  const now = Date.now();
+  const streak = before.streak + 1;
+  const stats = {
+    ...before,
+    correct: before.correct + 1,
+    attempts: before.attempts + 1,
+    streak,
+    lastReviewedAt: now,
+    nextReviewAt: now + getReviewDelay(streak)
+  };
   if (before.correct === 0) state.newLearnedIds.add(word.id);
   saveWordStats(word.id, stats);
 }
 
+function registerTermTestCompletion(word) {
+  const progressKey = state.currentQuest?.mode === "grade2_term_test_words"
+    ? "wordTranslation"
+    : state.currentQuest?.mode === "grade2_term_fill_written"
+      ? "fillWritten"
+      : null;
+  if (!progressKey) return;
+  state.save.termTestProgress = state.save.termTestProgress || { wordTranslation: {}, fillWritten: {} };
+  state.save.termTestProgress[progressKey] = state.save.termTestProgress[progressKey] || {};
+  state.save.termTestProgress[progressKey][word.id] = true;
+}
+
 function registerWrong(word) {
   const before = getWordStats(word.id);
-  const stats = { correct: before.correct, wrong: before.wrong + 1, attempts: before.attempts + 1 };
+  const now = Date.now();
+  const stats = {
+    ...before,
+    wrong: before.wrong + 1,
+    attempts: before.attempts + 1,
+    streak: 0,
+    lastReviewedAt: now,
+    nextReviewAt: now
+  };
   saveWordStats(word.id, stats);
 }
 
@@ -1955,9 +2650,20 @@ function finishQuest(cleared) {
     resultMugiDown.classList.toggle("hidden", cleared);
   }
 
+  const termTestLabel = {
+    grade2_term_test_words: "単語チェック　英訳",
+    grade2_term_test_ja_choice: "単語チェック　和訳",
+    grade2_term_fill_choice: "空所補充（選択式）",
+    grade2_term_fill_written: "空所補充（記述式）",
+    grade2_term_tense_choice: "時制復習（選択式）",
+    grade2_term_conjunction_choice: "接続詞（選択式）",
+    grade2_term_reorder_choice: "並び替え（2番目・4番目）"
+  }[state.currentQuest?.mode];
   $("clearTitle").textContent = cleared ? "ステージクリア！" : "ムギはつかれてしまった…";
   $("clearMessage").textContent = cleared
-    ? (state.currentQuest.mode === "unit2_test_prep"
+    ? (termTestLabel
+        ? `中学校2年生定期テストの「${termTestLabel}」20問をクリアしました。`
+        : state.currentQuest.mode === "unit2_test_prep"
         ? `${state.currentQuest.boss}を倒しました。単語20語の結果は単語図鑑の正答率に反映されています。熟語5問はテスト対策専用で、熟語図鑑の成績には反映されません。`
         : `${state.currentQuest.boss}を倒しました。完全習得は「${state.currentQuest.wordType === "phrase" ? 3 : 5}回以上正解」かつ「正答率80％以上」で登録されます。`)
     : `${state.currentQuest.boss}を倒せませんでした。でも、覚えた単語は記録されています。もう一度チャレンジしよう！`;
@@ -1975,7 +2681,14 @@ function finishQuest(cleared) {
 function resetData() {
   if (!confirm("ムギクエストのセーブデータをリセットしますか？")) return;
   localStorage.removeItem(SAVE_KEY);
-  state.save = { playerLife: PLAYER_MAX_LIFE, exp: 0, learned: {}, mastered: {}, clearedQuests: {} };
+  state.save = {
+    playerLife: PLAYER_MAX_LIFE,
+    exp: 0,
+    learned: {},
+    mastered: {},
+    clearedQuests: {},
+    termTestProgress: { wordTranslation: {}, fillWritten: {} }
+  };
   state.currentQuest = null;
   state.playerMaxLife = PLAYER_MAX_LIFE;
   state.enemyLife = 0;
@@ -1990,11 +2703,111 @@ function resetData() {
   showScreen("screenHome");
 }
 
+function speakCurrentAnswer() {
+  if (!state.currentWord || !("speechSynthesis" in window)) {
+    $("hintText").textContent = "この端末では音声再生を利用できません。";
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(getPrimaryAnswer(state.currentWord));
+  utterance.lang = "en-US";
+  utterance.rate = 0.82;
+  window.speechSynthesis.speak(utterance);
+}
+
+function exportSaveData() {
+  const backup = {
+    app: "mugiquest",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    save: state.save
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `mugiquest-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function sanitizeImportedStats(rawMap) {
+  if (!rawMap || typeof rawMap !== "object" || Array.isArray(rawMap)) return {};
+  return Object.fromEntries(Object.entries(rawMap).slice(0, 5000).map(([id, raw]) => {
+    const source = raw && typeof raw === "object" ? raw : {};
+    const correct = Math.max(0, Number(source.correct ?? source.count ?? 0) || 0);
+    const wrong = Math.max(0, Number(source.wrong ?? 0) || 0);
+    const attempts = Math.max(correct + wrong, Number(source.attempts ?? 0) || 0);
+    return [id, {
+      correct,
+      wrong,
+      attempts,
+      streak: Math.max(0, Number(source.streak ?? 0) || 0),
+      lastReviewedAt: Math.max(0, Number(source.lastReviewedAt ?? 0) || 0),
+      nextReviewAt: Math.max(0, Number(source.nextReviewAt ?? 0) || 0)
+    }];
+  }));
+}
+
+function sanitizeCompletionMap(rawMap) {
+  if (!rawMap || typeof rawMap !== "object" || Array.isArray(rawMap)) return {};
+  return Object.fromEntries(Object.entries(rawMap).filter(([, completed]) => Boolean(completed)).slice(0, 5000));
+}
+
+async function importSaveData(file) {
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) throw new Error("ファイルが大きすぎます");
+  const parsed = JSON.parse(await file.text());
+  const imported = parsed?.save || parsed;
+  if (!imported || typeof imported !== "object" || Array.isArray(imported)) {
+    throw new Error("学習データの形式ではありません");
+  }
+  if (!confirm("現在の学習記録を、選択したバックアップで置き換えますか？")) return;
+
+  const learned = sanitizeImportedStats(imported.learned);
+  const mastered = {};
+  Object.entries(learned).forEach(([id, stats]) => {
+    const neededCorrect = String(id).startsWith("p1_") || String(id).startsWith("p2_") ? 3 : 5;
+    if (stats.correct >= neededCorrect && stats.attempts > 0 && stats.correct / stats.attempts >= 0.8) mastered[id] = true;
+  });
+
+  state.save = {
+    playerLife: PLAYER_MAX_LIFE,
+    exp: Math.max(0, Number(imported.exp ?? 0) || 0),
+    learned,
+    mastered,
+    clearedQuests: imported.clearedQuests && typeof imported.clearedQuests === "object" && !Array.isArray(imported.clearedQuests)
+      ? imported.clearedQuests
+      : {},
+    termTestProgress: {
+      wordTranslation: sanitizeCompletionMap(imported.termTestProgress?.wordTranslation),
+      fillWritten: sanitizeCompletionMap(imported.termTestProgress?.fillWritten)
+    }
+  };
+  saveGame();
+  state.currentQuest = null;
+  state.playerMaxLife = PLAYER_MAX_LIFE;
+  renderQuests();
+  renderLearningDashboard();
+  updateStatus();
+  showScreen("screenHome");
+  alert("学習データを復元しました。");
+}
+
 
 function showHint() {
   if (!state.currentWord) return;
   if (state.currentWord.type === "long_sentence") {
     $("hintText").textContent = "ヒント：語順とつづりに注意して、英文全体を入力しよう。";
+  } else if (isReorderItem(state.currentWord)) {
+    $("hintText").textContent = "ヒント：主語の次に動詞が来る基本語順と、時を表す語句の位置を確認しよう。";
+  } else if (isTenseChoiceQuest()) {
+    $("hintText").textContent = "ヒント：every day、yesterday、tomorrowなど、時を表す語句を確認しよう。";
+  } else if (isFillBlankItem(state.currentWord)) {
+    $("hintText").textContent = `ヒント：空所は${state.currentWord.blankCount}語です。前後の文法と意味を確認しよう。`;
   } else if (isPhraseItem(state.currentWord)) {
     const pron = state.currentWord.pron || "";
     $("hintText").textContent = `読み方：${pron}／意味：${state.currentWord.meaning || state.currentWord.ja}／${state.currentWord.blankCount || 1}語`;
@@ -2052,6 +2865,25 @@ function bindEvents() {
   document.querySelectorAll("[data-phrasebook-grade]").forEach(btn => btn.addEventListener("click", () => setPhraseBookGradeFilter(btn.dataset.phrasebookGrade)));
   document.querySelectorAll("[data-phrasebook-status]").forEach(btn => btn.addEventListener("click", () => setPhraseBookStatusFilter(btn.dataset.phrasebookStatus)));
   if ($("hintBtn")) $("hintBtn").addEventListener("click", showHint);
+  if ($("speakBtn")) $("speakBtn").addEventListener("click", speakCurrentAnswer);
+  document.querySelectorAll("[data-export-save]").forEach(btn => btn.addEventListener("click", () => {
+    closeMobileMenu();
+    exportSaveData();
+  }));
+  document.querySelectorAll("[data-import-save]").forEach(btn => btn.addEventListener("click", () => {
+    closeMobileMenu();
+    $("saveFileInput").click();
+  }));
+  if ($("saveFileInput")) $("saveFileInput").addEventListener("change", async event => {
+    try {
+      await importSaveData(event.target.files?.[0]);
+    } catch (error) {
+      console.error(error);
+      alert("学習データを復元できませんでした。ムギクエストのバックアップファイルを選んでください。");
+    } finally {
+      event.target.value = "";
+    }
+  });
   $("wordBookBackBtn").addEventListener("click", closeWordBook);
   if ($("phraseBookBackBtn")) $("phraseBookBackBtn").addEventListener("click", closePhraseBook);
   $("backBtn").addEventListener("click", () => {

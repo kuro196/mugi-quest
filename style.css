@@ -367,11 +367,96 @@ h1 span {
   cursor: default;
 }
 
+.speak-btn {
+  background: #e8f5ff;
+  color: #245c78;
+}
+
+.visually-hidden {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.topbar-actions .data-btn {
+  padding-inline: 11px;
+  font-size: 12px;
+}
+
 .answer-form {
   padding: 14px;
   border-radius: 22px;
   border: 1px solid var(--line);
   background: #fff;
+}
+
+.choice-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: #fff;
+}
+
+.choice-list.hidden {
+  display: none;
+}
+
+.choice-btn {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 2px solid #dcebdd;
+  border-radius: 16px;
+  background: #fbfffb;
+  color: var(--ink);
+  text-align: left;
+  font-weight: 850;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.choice-btn:hover:not(:disabled),
+.choice-btn:focus-visible {
+  border-color: var(--main);
+  background: #f1fff1;
+  outline: none;
+}
+
+.choice-btn:disabled {
+  cursor: default;
+}
+
+.choice-btn.correct {
+  border-color: var(--main);
+  background: #eaffea;
+}
+
+.choice-btn.wrong {
+  border-color: var(--danger);
+  background: #fff0ef;
+}
+
+.choice-mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #e8f4e8;
+  color: var(--main-dark);
+  font-weight: 950;
 }
 
 .answer-label {
@@ -1893,7 +1978,7 @@ code {
 
   .game-shell.screen-battle-mode .hint-row {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto auto;
     gap: 8px;
     margin-top: 7px;
   }
@@ -1904,6 +1989,7 @@ code {
   }
 
   .game-shell.screen-battle-mode .pron-text {
+    grid-column: 1 / -1;
     min-height: 18px;
     margin-top: 0;
     align-self: center;
@@ -1914,6 +2000,29 @@ code {
   .game-shell.screen-battle-mode .answer-form {
     padding: 8px;
     border-radius: 15px;
+  }
+
+  .game-shell.screen-battle-mode .choice-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 7px;
+    border-radius: 15px;
+  }
+
+  .game-shell.screen-battle-mode .choice-btn {
+    grid-template-columns: 23px minmax(0, 1fr);
+    gap: 5px;
+    min-height: 48px;
+    padding: 7px;
+    border-radius: 12px;
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .game-shell.screen-battle-mode .choice-mark {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
   }
 
   .game-shell.screen-battle-mode .input-row {
@@ -2006,6 +2115,10 @@ code {
     order: 1;
   }
 
+  .game-shell.screen-battle-mode .choice-list {
+    order: 1;
+  }
+
   .game-shell.screen-battle-mode .question-box {
     order: 2;
   }
@@ -2085,8 +2198,17 @@ code {
 
 .unit-metrics-box {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+}
+
+.term-test-metrics-box {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.unit-metric.due {
+  background: #eaf6ff;
+  border-color: #b9ddef;
 }
 
 @media (max-width: 560px) {
@@ -2103,12 +2225,16 @@ code {
   }
 
   .unit-metrics-box {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0;
     overflow: hidden;
     border: 1px solid var(--line);
     border-radius: 13px;
     background: #f6fbf5;
+  }
+
+  .term-test-metrics-box {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .unit-metrics-box .unit-metric {
@@ -2124,6 +2250,10 @@ code {
 
   .unit-metrics-box .unit-metric.master {
     background: #fff8e7;
+  }
+
+  .unit-metrics-box .unit-metric.due {
+    background: #eaf6ff;
   }
 
   .unit-metrics-box .unit-metric span {

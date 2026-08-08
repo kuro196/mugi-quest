@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ムギクエスト Ver1.0</title>
+  <title>ムギクエスト Ver1.1</title>
   <meta name="theme-color" content="#2e7d32" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -26,6 +26,8 @@
         <button id="mobileGrade2Btn" type="button">２年生</button>
         <button id="mobileWordBookBtn" type="button">単語図鑑</button>
         <button id="mobilePhraseBookBtn" type="button">熟語図鑑</button>
+        <button type="button" data-export-save>学習データを保存</button>
+        <button type="button" data-import-save>学習データを復元</button>
         <button id="mobileResetBtn" type="button" class="danger-menu-item">データリセット</button>
         <button id="mobileMenuCloseBtn" type="button" class="menu-close-item">閉じる</button>
       </div>
@@ -33,7 +35,7 @@
 
     <header class="topbar">
       <div>
-        <h1>ムギクエスト <span>Ver1.0</span></h1>
+        <h1>ムギクエスト <span>Ver1.1</span></h1>
         <p>英単語RPG / 1年生復習・2年生Unitダンジョン</p>
       </div>
       <div class="topbar-actions">
@@ -44,6 +46,8 @@
         </div>
         <button id="openWordBookBtn" class="ghost-btn wordbook-open-btn" type="button">単語図鑑</button>
         <button id="openPhraseBookBtn" class="ghost-btn wordbook-open-btn" type="button">熟語図鑑</button>
+        <button class="ghost-btn data-btn" type="button" data-export-save>記録を保存</button>
+        <button class="ghost-btn data-btn" type="button" data-import-save>記録を復元</button>
         <button id="resetBtn" class="ghost-btn" type="button">データリセット</button>
       </div>
     </header>
@@ -118,9 +122,12 @@
             <div id="phraseSentence" class="phrase-sentence hidden" aria-label="熟語穴埋め問題"></div>
             <div class="hint-row">
               <button id="hintBtn" class="hint-btn" type="button">ヒント</button>
+              <button id="speakBtn" class="hint-btn speak-btn" type="button" aria-label="英語の発音を聞く">🔊 発音</button>
               <div id="hintText" class="pron-text">ヒントボタンで読み方を表示できます。</div>
             </div>
           </div>
+
+          <div id="choiceList" class="choice-list hidden" role="group" aria-label="日本語の選択肢"></div>
 
           <form id="answerForm" class="answer-form" autocomplete="off">
             <label class="answer-label" for="answerInput">答え</label>
@@ -225,6 +232,10 @@
 
   </div>
 
+  <input id="saveFileInput" class="visually-hidden" type="file" accept="application/json,.json" tabindex="-1" aria-hidden="true" />
+
+  <script src="words-data.js"></script>
+  <script src="phrases-data.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
