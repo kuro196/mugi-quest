@@ -558,91 +558,22 @@ const quests = [
     unit: "Unit3",
     wordType: "word"
   },
-  {
-    id: "grade2_term_test_ja_choice",
-    title: "単語チェック　和訳（4択・全65語）",
-    boss: "和訳テストドラゴン",
-    bossLife: 20,
+  ...[
+    ["part12", "Part 1～2 単語・熟語（13問）", "単語ヴィーナス"],
+    ["rt1", "R&T 1 単語・熟語（10問）", "単語ヴィーナス"],
+    ["rt2", "R&T 2 単語・熟語（16問）", "単語ヴィーナス"],
+    ["sentences", "キーセンテンス 穴埋め（6問）", "単語ヴィーナス"]
+  ].map(([section, title, boss]) => ({
+    id: "unit4_test_" + section,
+    title, boss,
+    bossLife: window.MUGI_UNIT4_TEST[section].length,
     playerLife: 10,
-    enemyImg: "images/enemies/ghost_master.png",
+    enemyImg: "images/enemies/word_venus.png",
     backgroundImg: "images/backgrounds/dungeon_unit2.png",
-    mode: "grade2_term_test_ja_choice",
-    unit: "中学校2年生定期テスト",
-    wordType: "term_test"
-  },
-  {
-    id: "grade2_term_test_words",
-    title: "単語チェック　英訳（全65語）",
-    boss: "定期テストドラゴン",
-    bossLife: 20,
-    playerLife: 10,
-    enemyImg: "images/enemies/ghost_master.png",
-    backgroundImg: "images/backgrounds/dungeon_unit2.png",
-    mode: "grade2_term_test_words",
-    unit: "中学校2年生定期テスト",
-    wordType: "term_test"
-  },
-  {
-    id: "grade2_term_fill_choice",
-    title: "空所補充（選択式）",
-    boss: "選択問題ドラゴン",
-    bossLife: 20,
-    playerLife: 10,
-    enemyImg: "images/enemies/ghost_master.png",
-    backgroundImg: "images/backgrounds/dungeon_unit2.png",
-    mode: "grade2_term_fill_choice",
-    unit: "中学校2年生定期テスト",
-    wordType: "fill_test"
-  },
-  {
-    id: "grade2_term_fill_written",
-    title: "空所補充（記述式）",
-    boss: "記述問題ドラゴン",
-    bossLife: 20,
-    playerLife: 10,
-    enemyImg: "images/enemies/ghost_master.png",
-    backgroundImg: "images/backgrounds/dungeon_unit2.png",
-    mode: "grade2_term_fill_written",
-    unit: "中学校2年生定期テスト",
-    wordType: "fill_test"
-  },
-  {
-    id: "grade2_term_tense_choice",
-    title: "時制復習（選択式・全60問）",
-    boss: "時制ドラゴン",
-    bossLife: 20,
-    playerLife: 10,
-    enemyImg: "images/enemies/ghost_master.png",
-    backgroundImg: "images/backgrounds/dungeon_unit2.png",
-    mode: "grade2_term_tense_choice",
-    unit: "中学校2年生定期テスト",
-    wordType: "tense_test"
-  },
-  {
-    id: "grade2_term_conjunction_choice",
-    title: "接続詞（選択式・全20問）",
-    boss: "接続詞ドラゴン",
-    bossLife: 20,
-    playerLife: 10,
-    enemyImg: "images/enemies/ghost_master.png",
-    backgroundImg: "images/backgrounds/dungeon_unit2.png",
-    mode: "grade2_term_conjunction_choice",
-    unit: "中学校2年生定期テスト",
-    wordType: "conjunction_test"
-  },
-  {
-    id: "grade2_term_reorder_choice",
-    title: "並び替え（2番目・4番目・全60問）",
-    boss: "並び替えドラゴン",
-    bossLife: 20,
-    playerLife: 10,
-    enemyImg: "images/enemies/ghost_master.png",
-    backgroundImg: "images/backgrounds/dungeon_unit2.png",
-    mode: "grade2_term_reorder_choice",
-    unit: "中学校2年生定期テスト",
-    wordType: "reorder_test"
-  }
-
+    mode: "unit4_test",
+    unit: "Unit4 テスト対策",
+    section
+  })),
 
 ];
 
@@ -1165,6 +1096,7 @@ const ASSET_PATHS = [
   'images/enemies/slime_king.png',
   'images/enemies/ghost.png',
   'images/enemies/ghost_master.png',
+  'images/enemies/word_venus.png',
   'images/enemies/goblin_boy.png',
   'images/enemies/goblin_girl.png',
   'images/backgrounds/dungeon_unit01.png',
@@ -1210,6 +1142,30 @@ function setPlayerImageFallback() {
   }
 }
 
+// 元画像の上端からの目の位置：ムギ約26.6%、ヴィーナス約23.5%。
+// 表示サイズに応じて合わせるため、スマホでも同じ目線を保つ。
+let venusAlignmentObserver;
+function alignVenusEyes() {
+  const enemy = $("enemyImg");
+  const player = document.querySelector(".player-img");
+  if (!enemy || !player || state.currentQuest?.mode !== "unit4_test") return;
+  if (!player.offsetHeight || !enemy.offsetHeight) return;
+  const playerBottom = parseFloat(getComputedStyle(player).bottom) || 0;
+  enemy.style.bottom = (playerBottom + player.offsetHeight * 0.734 - enemy.offsetHeight * 0.765) + "px";
+}
+
+function watchVenusAlignment() {
+  if (venusAlignmentObserver) return;
+  const player = document.querySelector(".player-img");
+  const enemy = $("enemyImg");
+  venusAlignmentObserver = new ResizeObserver(alignVenusEyes);
+  [$("stage"), player, enemy].forEach(element => {
+    if (element) venusAlignmentObserver.observe(element);
+  });
+  player?.addEventListener("load", alignVenusEyes);
+  enemy?.addEventListener("load", alignVenusEyes);
+}
+
 function setEnemyImage(src, alt) {
   const enemy = $('enemyImg');
   if (!enemy) return;
@@ -1237,7 +1193,8 @@ function loadSave() {
       clearedQuests: loaded.clearedQuests || {},
       termTestProgress: {
         wordTranslation: loaded.termTestProgress?.wordTranslation || {},
-        fillWritten: loaded.termTestProgress?.fillWritten || {}
+        fillWritten: loaded.termTestProgress?.fillWritten || {},
+        unit4: loaded.termTestProgress?.unit4 || {}
       }
     };
   } catch (e) {
@@ -1618,24 +1575,21 @@ function renderUnitSummary() {
 
   if (!isGrade1) {
     const progress = state.save.termTestProgress || {};
-    const wordTranslationCount = Object.values(progress.wordTranslation || {}).filter(Boolean).length;
-    const fillWrittenCount = Object.values(progress.fillWritten || {}).filter(Boolean).length;
-    const row = document.createElement("div");
-    row.className = "unit-summary-row term-test-summary-row";
-    row.innerHTML = `
-      <div class="unit-name">中学校2年生定期テスト</div>
+    const unit4Row = document.createElement("div");
+    unit4Row.className = "unit-summary-row term-test-summary-row";
+    const unit4Progress = progress.unit4 || {};
+    // 以前のバージョンで全問クリアしたステージも正解済みとして表示する。
+    const countUnit4 = sections => sections.reduce((total, section) => total +
+      window.MUGI_UNIT4_TEST[section].filter(item => unit4Progress[item.id] ||
+        state.save.clearedQuests?.["unit4_test_" + section]).length, 0);
+    unit4Row.innerHTML = `
+      <div class="unit-name">Unit4 テスト対策</div>
       <div class="unit-metrics-box term-test-metrics-box">
-        <div class="unit-metric">
-          <span>単語英訳</span>
-          <strong>${Math.min(wordTranslationCount, 65)}/65</strong>
-        </div>
-        <div class="unit-metric master">
-          <span>空所補充記述</span>
-          <strong>${Math.min(fillWrittenCount, 51)}/51</strong>
-        </div>
+        <div class="unit-metric"><span>単語・熟語（1回以上正解）</span><strong>${countUnit4(["part12", "rt1", "rt2"])}/39</strong></div>
+        <div class="unit-metric master"><span>穴埋め（1回以上正解）</span><strong>${countUnit4(["sentences"])}/6</strong></div>
       </div>
     `;
-    list.appendChild(row);
+    list.appendChild(unit4Row);
   }
 }
 
@@ -1994,7 +1948,9 @@ function renderQuests() {
 
 function getQuestWords(quest, forBattle = true) {
   let filtered;
-  if (["grade2_term_fill_choice", "grade2_term_fill_written"].includes(quest.mode)) {
+  if (quest.mode === "unit4_test") {
+    filtered = window.MUGI_UNIT4_TEST[quest.section];
+  } else if (["grade2_term_fill_choice", "grade2_term_fill_written"].includes(quest.mode)) {
     filtered = GRADE2_TERM_FILL_ITEMS;
   } else if (quest.mode === "grade2_term_tense_choice") {
     filtered = GRADE2_TERM_TENSE_ITEMS;
@@ -2167,6 +2123,7 @@ function startQuest(questId) {
   setEnemyImage(quest.enemyImg, quest.boss);
   const enemyElement = $("enemyImg");
   if (enemyElement) {
+    enemyElement.style.bottom = "";
     enemyElement.classList.toggle("final-boss-position", quest.mode === "final");
   }
   $("enemyLifeLabel").textContent = `${quest.boss} ライフ`;
@@ -2175,6 +2132,8 @@ function startQuest(questId) {
   renderBattleLog();
   renderLearningDashboard();
   showScreen("screenBattle");
+  watchVenusAlignment();
+  alignVenusEyes();
   addBattleLog(`${quest.boss}が現れた！ ライフ ${state.enemyLife}/${state.enemyMaxLife}`, "normal");
   renderQuestion();
 }
@@ -2555,6 +2514,12 @@ function registerCorrect(word) {
 }
 
 function registerTermTestCompletion(word) {
+  if (state.currentQuest?.mode === "unit4_test") {
+    state.save.termTestProgress = state.save.termTestProgress || {};
+    state.save.termTestProgress.unit4 = state.save.termTestProgress.unit4 || {};
+    state.save.termTestProgress.unit4[word.id] = true;
+    return;
+  }
   const progressKey = state.currentQuest?.mode === "grade2_term_test_words"
     ? "wordTranslation"
     : state.currentQuest?.mode === "grade2_term_fill_written"
@@ -2661,7 +2626,9 @@ function finishQuest(cleared) {
   }[state.currentQuest?.mode];
   $("clearTitle").textContent = cleared ? "ステージクリア！" : "ムギはつかれてしまった…";
   $("clearMessage").textContent = cleared
-    ? (termTestLabel
+    ? (state.currentQuest.mode === "unit4_test"
+        ? `Unit4の「${state.currentQuest.title}」をクリアしました。`
+        : termTestLabel
         ? `中学校2年生定期テストの「${termTestLabel}」20問をクリアしました。`
         : state.currentQuest.mode === "unit2_test_prep"
         ? `${state.currentQuest.boss}を倒しました。単語20語の結果は単語図鑑の正答率に反映されています。熟語5問はテスト対策専用で、熟語図鑑の成績には反映されません。`
@@ -2784,7 +2751,8 @@ async function importSaveData(file) {
       : {},
     termTestProgress: {
       wordTranslation: sanitizeCompletionMap(imported.termTestProgress?.wordTranslation),
-      fillWritten: sanitizeCompletionMap(imported.termTestProgress?.fillWritten)
+      fillWritten: sanitizeCompletionMap(imported.termTestProgress?.fillWritten),
+      unit4: sanitizeCompletionMap(imported.termTestProgress?.unit4)
     }
   };
   saveGame();
@@ -2810,7 +2778,7 @@ function showHint() {
     $("hintText").textContent = `ヒント：空所は${state.currentWord.blankCount}語です。前後の文法と意味を確認しよう。`;
   } else if (isPhraseItem(state.currentWord)) {
     const pron = state.currentWord.pron || "";
-    $("hintText").textContent = `読み方：${pron}／意味：${state.currentWord.meaning || state.currentWord.ja}／${state.currentWord.blankCount || 1}語`;
+    $("hintText").textContent = `読み方：${pron}／${state.currentWord.blankCount || 1}語`;
   } else {
     const pron = state.currentWord.pron || "読み方は準備中";
     $("hintText").textContent = `読み方：${pron}`;
